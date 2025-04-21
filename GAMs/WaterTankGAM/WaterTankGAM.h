@@ -123,13 +123,13 @@ private:
      */
     //MARTe::uint32 *inputSignal;
     MARTe::uint32 *usecTime;
-    MARTe::float32 *pumpVoltageRequest;
+    MARTe::float64 *pumpVoltageRequest;
 
     /**
      * The output signal
      */
-    MARTe::float32 *waterHeight;
-    MARTe::float32 *pumpVoltage;
+    MARTe::float64 *waterHeight;
+    MARTe::float64 *pumpVoltage;
     //MARTe::uint32 *outputSignal;
 
     /**

@@ -19,6 +19,8 @@
  * @details This source file contains the definition of all the methods for
  * the class WaterTankGAM (public, protected, and private). Be aware that some 
  * methods, such as those inline could be defined on the header file, instead.
+ * Compile command:
+ *  make -C GAMs/WaterTankGAM -f Makefile.gcc
  */
 
 /*---------------------------------------------------------------------------*/
@@ -56,11 +58,12 @@ WaterTankGAM::WaterTankGAM() {
     tankArea      = 0;
     maxVoltage    = 0;
     minVoltage    = 0;
+    // GAM Inputs
     usecTime = NULL_PTR(MARTe::uint32 *);
-    pumpVoltageRequest = NULL_PTR(MARTe::float32*);
-
-    waterHeight = NULL_PTR(MARTe::float32 *);
-    pumpVoltage = NULL_PTR(MARTe::float32*);
+    pumpVoltageRequest = NULL_PTR(MARTe::float64*);
+    // Outputs
+    waterHeight = NULL_PTR(MARTe::float64 *);
+    pumpVoltage = NULL_PTR(MARTe::float64 *);
 }
 
 WaterTankGAM::~WaterTankGAM() {
@@ -143,17 +146,17 @@ bool WaterTankGAM::Setup() {
             }
             ok = GetSignalName(InputSignals, 1u, inputSignalName);
             inputSignalType = GetSignalType(InputSignals, 1u);
-            ok = (inputSignalType == Float32Bit);
+            ok = (inputSignalType == Float64Bit);
             if (!ok) {
                 const char8 * const inputSignalTypeStr = TypeDescriptor::GetTypeNameFromTypeDescriptor(inputSignalType);
                 REPORT_ERROR(ErrorManagement::ParametersError,
-                        "The type of the input signals shall be float32. inputSignalType = %s", inputSignalTypeStr);
+                        "The type of the input signals shall be float64. inputSignalType = %s", inputSignalTypeStr);
             }
     }
 
      if (ok) {
         usecTime = reinterpret_cast<uint32 *>(GetInputSignalMemory(0u));
-        pumpVoltageRequest = reinterpret_cast<float32 *>(GetInputSignalMemory(1u));
+        pumpVoltageRequest = reinterpret_cast<float64 *>(GetInputSignalMemory(1u));
         REPORT_ERROR(ErrorManagement::Information, "InputSignals reinterpret_cast OK");
     }
 
@@ -237,8 +240,8 @@ bool WaterTankGAM::Setup() {
     }
 */
     if (ok) {
-        waterHeight = reinterpret_cast<float32 *>(GetOutputSignalMemory(0u));
-        pumpVoltageRequest = reinterpret_cast<float32 *>(GetOutputSignalMemory(1u));
+        waterHeight = reinterpret_cast<float64 *>(GetOutputSignalMemory(0u));
+        pumpVoltage = reinterpret_cast<float64 *>(GetOutputSignalMemory(1u));
         REPORT_ERROR(ErrorManagement::Information, "OutputSignals reinterpret_cast OK");
     }
     return ok;
@@ -247,7 +250,7 @@ bool WaterTankGAM::Setup() {
 
 bool WaterTankGAM::Execute() {
     // This fucntion executes every MARTe2 cycle
-    float32 voltage = *pumpVoltageRequest;
+    float64 voltage = *pumpVoltageRequest;
     //Saturate voltage
     if(voltage > maxVoltage){
         voltage = maxVoltage;
@@ -256,7 +259,7 @@ bool WaterTankGAM::Execute() {
         voltage = minVoltage;
     }            
     //simple Euler method
-    float32 height   = (voltage * bFlowRate - aFlowRate * sqrt(lastHeight)) / tankArea * (*usecTime - lastUsecTime) * 1e-6 + lastHeight;
+    float64 height  = (voltage * bFlowRate - aFlowRate * sqrt(lastHeight)) / tankArea * (*usecTime - lastUsecTime) * 1e-6 + lastHeight;
     if(height < 0){
         REPORT_ERROR(ErrorManagement::Warning, "Tank height is negative: %f", height);
         height = 0;
