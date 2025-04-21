@@ -22,6 +22,8 @@ export MARTe2_DIR=$MARTe_DIR/MARTe2-dev
 export MARTe2_Components_DIR=$MARTe_DIR/MARTe2-components
 export MARTe2_Demos_DIR=$MARTe_DIR/MARTe2-demos-padova
 
+LD_LIBRARY_PATH=$LD_LIBRARY_PATH:../Build/x86-linux/Components/GAMs/WaterTankGAM/
+
 LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$MARTe2_Demos_DIR/Build/x86-linux/Components/DataSources/ADCSimulator/
 LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$MARTe2_Demos_DIR/Build/x86-linux/Components/DataSources/MDSReaderNS/
 LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$MARTe2_Demos_DIR/Build/x86-linux/Components/DataSources/MDSStream/

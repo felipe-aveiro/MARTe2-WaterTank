@@ -1,0 +1,17 @@
+export TARGET=x86-linux
+export MARTe_DIR=/opt/marte
+export MARTe2_DIR=$MARTe_DIR/MARTe2-dev
+export MARTe2_Components_DIR=$MARTe_DIR/MARTe2-components
+# export MARTe2_Demos_DIR=$MARTe_DIR/MARTe2-demos-padova
+export MARTe2_Demos_DIR=$HOME/git-repos/MARTe2-demos-padova
+# export OPEN62541_LIB=~/Projects/open62541/build/bin
+# export OPEN62541_INCLUDE=~/Projects/open62541/build
+# export EPICS_BASE=~/Projects/epics-base-7.0.2
+# export EPICSPVA=~/Projects/EPICS/base-7.0.2
+export EPICS_BASE=/opt/epics/epics-base
+export EPICSPVA=/opt/epics/epics-base
+export EPICS_HOST_ARCH=linux-x86_64
+export PATH=$PATH:$EPICS_BASE/bin/$EPICS_HOST_ARCH
+#export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$MARTe2_DIR/Build/x86-linux/Core/
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$MARTe2_DIR/Build/x86-linux/Core/:$EPICS_BASE/lib/$EPICS_HOST_ARCH
+# export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$MARTe2_DIR/Build/x86-linux/Core/:$EPICS_BASE/lib/$EPICS_HOST_ARCH:$SDN_CORE_LIBRARY_DIR
