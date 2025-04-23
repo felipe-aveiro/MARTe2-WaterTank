@@ -13,8 +13,8 @@ print("UDP server is up and listening...")
 while True:
     # Receive data from the client
     data, client_address = server_socket.recvfrom(1024)
-    print(f"Received {len(data)} bytes, message: {data}")
+    print(f"Received {len(data)} bytes, message: {data}\n")
     time = np.frombuffer(data, dtype=np.uint32)
     values64 = np.frombuffer(data, dtype=np.float64)
-    print(f"Counter: {time[0]} RefValue: {values64[1]:.2f} "
-          f"WaterHeight: {values64[2]:.3f}")
+    print(f"Timer: {time[0]} s | RefValue: {values64[1]:.2f} | "
+          f"WaterHeight: {values64[2]:.3f}\n")
