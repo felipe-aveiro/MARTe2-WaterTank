@@ -249,17 +249,29 @@ bool WaterTankGAM::Setup() {
 }
 
 bool WaterTankGAM::Execute() {
-    // This fucntion executes every MARTe2 cycle
+    // This function executes every MARTe2 cycle
     float64 voltage = *pumpVoltageRequest;
     //Saturate voltage
+
+    /*
     if(voltage > maxVoltage){
         voltage = maxVoltage;
     }
     if(voltage < minVoltage){
         voltage = minVoltage;
     }            
+    */
+
     //simple Euler method
     float64 height  = (voltage * bFlowRate - aFlowRate * sqrt(lastHeight)) / tankArea * (*usecTime - lastUsecTime) * 1e-6 + lastHeight;
+    
+    /*
+    std::default_random_engine gen;
+    std::normal_distribution<double> dist(0.0,1.0);
+   
+    height += dist(gen);
+    */
+
     if(height < 0){
         REPORT_ERROR(ErrorManagement::Warning, "Tank height is negative: %f", height);
         height = 0;

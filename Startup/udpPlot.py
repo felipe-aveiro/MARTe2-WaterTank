@@ -47,6 +47,10 @@ def readPendingDatagrams():
         ptr2 += 1
         curve2.setData(data2)
         curve2.setPos(ptr2, 0)
+        data2b[:-1] = data2b[1:]  # shift data in the array one sample left
+        data2b[-1] = values64[2]
+        curve2b.setData(data2b)
+        curve2b.setPos(ptr2, 0)
 #        processTheDatagram(datagram)
 
 
@@ -68,7 +72,11 @@ p2 = win.addPlot()
 data1 = np.random.normal(size=300)
 curve1 = p1.plot(data1)
 data2 = np.zeros(300)
+data2b = np.zeros(300)
+
+
 curve2 = p2.plot(data2)
+curve2b = p2.plot(data2b, pen=(255,0,0), name="Red curve")
 ptr1 = 0
 ptr2 = 0
 
