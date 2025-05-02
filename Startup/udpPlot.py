@@ -38,9 +38,9 @@ def readPendingDatagrams():
         data = datagram.data()
         print(data)
         time = np.frombuffer(data, dtype=np.uint32)
-        print(f"Counter: {time[0]}, Time: {time[1]} ns")
+        print(f"Counter: {time[0]}, Time: {time[1]} \u00b5s")
         values64 = np.frombuffer(data, dtype=np.float64)
-        print(f"Value: {values64[0]}, Value: {values64[1]}")
+        print(f"Reference: {values64[0]}, Actual Value: {values64[1]}")
 
         data2[:-1] = data2[1:]  # shift data in the array one sample left
         data2[-1] = values64[1]
@@ -71,12 +71,12 @@ p1 = win.addPlot()
 p2 = win.addPlot()
 data1 = np.random.normal(size=300)
 curve1 = p1.plot(data1)
-data2 = np.zeros(300)
-data2b = np.zeros(300)
+data2 = np.zeros(30)
+data2b = np.zeros(30)
 
 
-curve2 = p2.plot(data2)
-curve2b = p2.plot(data2b, pen=(255,0,0), name="Red curve")
+curve2 = p2.plot(data2, pen='r', name="Reference")
+curve2b = p2.plot(data2b)
 ptr1 = 0
 ptr2 = 0
 
