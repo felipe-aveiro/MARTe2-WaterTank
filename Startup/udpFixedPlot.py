@@ -13,18 +13,33 @@ server_socket.bind((UDP_IP, UDP_PORT))
 
 print("\nUDP server is up and listening...\n")
 
-# Storing received data
-times = []  # Store time values (x axis)
-ref_values = []  # Store reference values (y axis)
-heights = []  # Store height values (y axis)
+
+# ------------------------------------------------------------------------
+# Storing received data (initial values for reference input)
+times = [0.0]  # Store time values (x axis); force the first time value to 0
+ref_values = [2.5]  # Store reference values (y axis); force the first reference value to 3.0
+# For GAMRef -> ref_values = [/GAMRef/OutputSignals/Default]
+# For GAMSin -> ref_values = [/GAMSin/Offset]
+# For GAMRamp -> ref_values = [/GAMRamp/Expression/**evaluate expression with Input1 = 0**]
+heights = [0.0]  # Store height values (y axis); force the first water height value to 0
+# ------------------------------------------------------------------------
+
+# ------------------------------------------------------------------------
+# Set maximum time of 10 seconds
+end_time = 10
+time_interval = 1e-3  # Sampling time
+# ------------------------------------------------------------------------
+
+
 
 # Graphic settings (no real-time updates)
 plt.ion()
 fig, ax = plt.subplots()
 line, = ax.plot([], [], label='Water Height', linewidth=2, color='#2285c5') # Line for water height
 line2, = ax.plot([], [], label='Reference Value', linestyle='--', linewidth=2, color='#616161')  # Line for reference value
-ax.set_xlim(0, 30)  
-ax.set_ylim(0, 5) 
+
+ax.set_xlim(0, end_time)  
+ax.set_ylim(0, 4) 
 ax.set_xlabel('Time (seconds)')
 ax.set_ylabel('Water Height (m)')
 ax.legend(frameon=True, edgecolor='black')
@@ -32,18 +47,31 @@ ax.legend(frameon=True, edgecolor='black')
 plt.rcParams['font.family'] = 'Helvetica'
 
 # Customization
-for x in [5, 10, 15, 20, 25]:
+for x in range(0,end_time):
     plt.axvline(x=x, color='#b6b6b6', linestyle='-', linewidth=0.5)  
-for y in [5, 4, 3, 2, 1]:
+for y in [4, 3, 2, 1]:
     plt.axhline(y=y, color='#b6b6b6', linestyle='-', linewidth=0.5)
 
 plt.tick_params(axis='both', direction='in', length=10, color='black')
 
 plt.gcf().set_facecolor('#dcdcdc')
 
-time = np.zeros(2, dtype=np.uint32)  
+time = np.zeros(2, dtype=np.uint32)
 
-while time[0] <= 30:
+# Adjust x-ticks to include odd numbers
+x_ticks = np.arange(0, 11, 1)  # Adjust to display from 0 to 10 seconds (step of 1)
+plt.xticks(x_ticks)  # Set x-axis ticks to include all numbers
+odd_x_ticks = np.arange(1, 11, 2)  # Odd numbers between 1 and 10
+plt.xticks(np.append(x_ticks, odd_x_ticks))  # Include odd numbers as well
+
+if time_interval == 1e-3:
+    time_index = 'ms'
+elif time_interval == 1e-2:
+    time_index = 'cs'
+else:
+    time_index = ''
+
+while time[0] <= end_time*(1/time_interval) - 1:
     try:
         # Receive data
         data, client_address = server_socket.recvfrom(1024)
@@ -53,11 +81,11 @@ while time[0] <= 30:
         values64 = np.frombuffer(data, dtype=np.float64)
 
         # Store data in arrays
-        times.append(time[0]-1)
+        times.append((time[0])*time_interval)
         ref_values.append(values64[1])
         heights.append(values64[2])
 
-        print(f"Timer: {time[0]-1} s | RefValue: {values64[1]:.2f} | WaterHeight: {values64[2]:.3f}")
+        print(f"Timer: {time[0]} {time_index} | RefValue: {values64[1]:.2f} | WaterHeight: {values64[2]:.3f}")
 
     except KeyboardInterrupt:
         print("\nApplication killed.\n")
@@ -70,6 +98,7 @@ line2.set_xdata(times)  # Set reference time values
 line2.set_ydata(ref_values)  # Set reference height values
 
 # Save the plot window with the data
+# Change name according to specific scenario
 plt.savefig('/home/felipe/git-repos/MARTe2-WaterTank/Startup/output_graph.png')
 
 # Close socket
