@@ -17,7 +17,7 @@ print("\nUDP server is up and listening...\n")
 # ------------------------------------------------------------------------
 # Storing received data (initial values for reference input)
 times = [0.0]  # Store time values (x axis); force the first time value to 0
-ref_values = [2.5]  # Store reference values (y axis); force the first reference value to 3.0
+ref_values = [0.0]  # Store reference values (y axis); force the first reference value to 3.0
 # For GAMRef -> ref_values = [/GAMRef/OutputSignals/Default]
 # For GAMSin -> ref_values = [/GAMSin/Offset]
 # For GAMRamp -> ref_values = [/GAMRamp/Expression/**evaluate expression with Input1 = 0**]
