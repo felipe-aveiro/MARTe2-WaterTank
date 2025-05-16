@@ -33,7 +33,7 @@ The project integrates a custom WaterTank GAM and a PID controller to enable acc
 - `Configurations`: Configuration files (`.cfg`) containing component definitions and system parameters.
 - `Startup`: Startup scripts (e.g., `Main.sh`), Python visualization tools, and plots generated from previous tests.
 - `GAMs/WaterTankGAM`: Implementation of generic application modules used within the system, namely of the water tank model.
-- - `MatlabLibs`: Shared object files (`.so`) generated from Simulink models for integration with MARTe2.
+- `MatlabLibs`: Shared object files (`.so`) generated from Simulink models for integration with MARTe2.
 - `Simulink-models`: Simulink model files (`.slx`) corresponding to the shared libraries (`.so`) used for integration with MARTe2.
 - `Build/x86-linux/Components/GAMs`: Generated binary files and libraries.
 - `README.md`: Project/repository description.
