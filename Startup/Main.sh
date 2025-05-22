@@ -78,12 +78,7 @@ LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$EPICS_BASE/lib/$EPICS_HOST_ARCH
 echo $LD_LIBRARY_PATH
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH
 
-if [ ${MDS} == 1 ]; then
-export rtappwriter_path=../Trees
-export rtappreader_path=../Trees
-export rtappdemo_path=../Trees
-mdstcl < CreateMDSTrees.tcl
-fi
+export isttokmarte_path=/opt/mdsplus/trees
 
 if [ "$DEBUG" = "cgdb" ]
 then
