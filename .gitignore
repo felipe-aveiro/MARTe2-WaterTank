@@ -38,3 +38,5 @@ depends*.*
 *.datafile
 *.tree
 Trees
+Startup/OutputGraphs/MARTe2-Engine/output_graph.png
+Startup/WaterTankOutputs.csv
