@@ -43,8 +43,8 @@ namespace MARTe {
 /**
  * The number of signals
  */
-    const  uint32 EP_NUM_INPUTS  = 4u;
-    const  uint32 EP_NUM_OUTPUTS = 2u;
+    const  uint32 EP_NUM_INPUTS  = 13u;
+    const  uint32 EP_NUM_OUTPUTS = 3u;
 
 /*---------------------------------------------------------------------------*/
 /*                           Method definitions                              */
@@ -52,23 +52,35 @@ namespace MARTe {
 //namespace MARTeIsttok {
     MagneticRZPosGAM::MagneticRZPosGAM() : 
                 GAM(),
-                MessageI() {
+                MessageI() // Should the method be registered as a messageable function?
+                {
         gain = 0u;
         numberOfSamplesAvg = 1u;
         numberOfInputElements = 0u;
 
-        //outputSignals = NULL_PTR(MARTe::float32 **);
-/*
-        inputElectricTop    = NULL_PTR(MARTe::float32 *);
-        inputElectricInner  = NULL_PTR(MARTe::float32 *);
-        inputElectricOuter  = NULL_PTR(MARTe::float32 *);
-        inputElectricBottom = NULL_PTR(MARTe::float32 *);
-*/
         triggerSdas = NULL_PTR(MARTe::uint32 *);
+        inputMirnov0    = NULL_PTR(MARTe::float32 *);
+        inputMirnov1  = NULL_PTR(MARTe::float32 *);
+        inputMirnov2  = NULL_PTR(MARTe::float32 *);
+        inputMirnov3 = NULL_PTR(MARTe::float32 *);
+        inputMirnov4    = NULL_PTR(MARTe::float32 *);
+        inputMirnov5  = NULL_PTR(MARTe::float32 *);
+        inputMirnov6  = NULL_PTR(MARTe::float32 *);
+        inputMirnov7 = NULL_PTR(MARTe::float32 *);
+        inputMirnov8    = NULL_PTR(MARTe::float32 *);
+        inputMirnov9  = NULL_PTR(MARTe::float32 *);
+        inputMirnov10  = NULL_PTR(MARTe::float32 *);
+        inputMirnov11 = NULL_PTR(MARTe::float32 *);
+        /*
         inputSignal = NULL; // NULL_PTR(MARTe::float32*);
+        */
 
+        outputEpIp = NULL_PTR(MARTe::float32 *);
         outputEpR = NULL_PTR(MARTe::float32 *);
         outputEpZ = NULL_PTR(MARTe::float32 *);
+
+        //outputSignals = NULL_PTR(MARTe::float32 **);
+        
         resetInEachState = false;
 
         lastInputs = NULL_PTR(MARTe::float32**);
@@ -104,7 +116,7 @@ namespace MARTe {
         if (ok) {
             ok = data.Read("Gain", gain);
             if (!ok) {
-                REPORT_ERROR(ErrorManagement::ParametersError, "The parameter Gain shall be set");
+                REPORT_ERROR(ErrorManagement::ParametersError, "The parameter Gain shall be set"); // Define Gain parameter
             }
         }
         if (ok) {
@@ -114,7 +126,7 @@ namespace MARTe {
             ok = data.Read("NumberOfSamplesAvg", numberOfSamplesAvg);
             if (!ok) {
                 REPORT_ERROR(ErrorManagement::ParametersError, 
-                        "The parameter NumberOfSamplesAvg shall be set");
+                        "The parameter NumberOfSamplesAvg shall be set"); // Define NumberOfSamplesAvg
             }
         }
         if (ok) {
@@ -147,9 +159,9 @@ namespace MARTe {
     bool MagneticRZPosGAM::Setup() {
         using namespace MARTe;
         uint32 numberOfInputSignals = GetNumberOfInputSignals();
-        bool ok = (numberOfInputSignals == 2u);
+        bool ok = (numberOfInputSignals == 13u);
         if (!ok) {
-            REPORT_ERROR(ErrorManagement::ParametersError, "The number of input signals shall be equal to 2. numberOfInputSignals = %d ", numberOfInputSignals);
+            REPORT_ERROR(ErrorManagement::ParametersError, "The number of input signals shall be equal to 13. numberOfInputSignals = %d ", numberOfInputSignals);
         }
         if (ok) {
 
@@ -160,7 +172,7 @@ namespace MARTe {
             if (!ok) {
                 const char8 * const inputSignalTypeStr = TypeDescriptor::GetTypeNameFromTypeDescriptor(inputSignalType);
                 REPORT_ERROR(ErrorManagement::ParametersError,
-                        "The type of the input signals shall be uint32. inputSignalType = %s", inputSignalTypeStr);
+                        "The type of the input signals shall be float32. inputSignalType = %s", inputSignalTypeStr);
             }
             uint32 numberOfInputSamples = 0u;
             if (ok) {
@@ -234,11 +246,11 @@ namespace MARTe {
                 ok = GetSignalNumberOfElements(InputSignals, 1u, numberOfInputElements);
             }
             if (ok) {
-                ok = (numberOfInputElements == 4u);
+                ok = (numberOfInputElements == 13u);
             }
             if (!ok) {
                 REPORT_ERROR(ErrorManagement::ParametersError,
-                        "The number of input signal elements shall be equal to 4. numberOfInputElements(%s) = %d", inputSignalName.Buffer(), numberOfInputElements);
+                        "The number of input signal elements shall be equal to 13. numberOfInputElements(%s) = %d", inputSignalName.Buffer(), numberOfInputElements);
             }
 
 
@@ -260,22 +272,36 @@ namespace MARTe {
         }
         if (ok) {
             triggerSdas = reinterpret_cast<uint32 *>(GetInputSignalMemory(0u));
+            /*
             inputSignal   = reinterpret_cast<float32 *>(GetInputSignalMemory(1u));
-/*
-            inputElectricTop    = reinterpret_cast<float32 *>(GetInputSignalMemory(0u));
-            inputElectricInner  = reinterpret_cast<float32 *>(GetInputSignalMemory(1u));
-            inputElectricOuter  = reinterpret_cast<float32 *>(GetInputSignalMemory(2u));
-            inputElectricBottom = reinterpret_cast<float32 *>(GetInputSignalMemory(3u));
-*/
+            */
+
+           /*---------------------------------------------------------------------------*/
+           /*      DEFINE WHICH MIRNOV INPUTS CORRELATE TO RIVERA, 2021 FIG. 4.16A      */
+           /*---------------------------------------------------------------------------*/
+
+            inputMirnov0    = reinterpret_cast<float32 *>(GetInputSignalMemory(1u));
+            inputMirnov1  = reinterpret_cast<float32 *>(GetInputSignalMemory(2u));
+            inputMirnov2  = reinterpret_cast<float32 *>(GetInputSignalMemory(3u));
+            inputMirnov3 = reinterpret_cast<float32 *>(GetInputSignalMemory(4u));
+            inputMirnov4    = reinterpret_cast<float32 *>(GetInputSignalMemory(5u));
+            inputMirnov5  = reinterpret_cast<float32 *>(GetInputSignalMemory(6u));
+            inputMirnov6  = reinterpret_cast<float32 *>(GetInputSignalMemory(7u));
+            inputMirnov7 = reinterpret_cast<float32 *>(GetInputSignalMemory(8u));
+            inputMirnov8    = reinterpret_cast<float32 *>(GetInputSignalMemory(9u));
+            inputMirnov9  = reinterpret_cast<float32 *>(GetInputSignalMemory(10u));
+            inputMirnov10  = reinterpret_cast<float32 *>(GetInputSignalMemory(11u));
+            inputMirnov11 = reinterpret_cast<float32 *>(GetInputSignalMemory(12u));
+
             REPORT_ERROR(ErrorManagement::Information, "InputSignals reinterpret_cast OK");
         }
 
 
         // OutputSignals
         uint32 numberOfOutputSignals = GetNumberOfOutputSignals();
-        ok = (numberOfOutputSignals == 2u);
+        ok = (numberOfOutputSignals == 3u);
         if (!ok) {
-            REPORT_ERROR(ErrorManagement::ParametersError, "The number of output signals shall be equal to 2. numberOfOutputSignals = %d ", numberOfOutputSignals);
+            REPORT_ERROR(ErrorManagement::ParametersError, "The number of output signals shall be equal to 3. numberOfOutputSignals = %d ", numberOfOutputSignals);
         }
         if (ok) {
             uint32 n;
@@ -324,14 +350,14 @@ namespace MARTe {
                     REPORT_ERROR(ErrorManagement::ParametersError,
                                  "The number of output signals elements shall be equal to 1. (%s) numberOfOutputElements = %d", outputSignalName.Buffer(), numberOfOutputElements);
                 }
-
-            }
-            if (ok) {
-                outputEpR = reinterpret_cast<float32 *>(GetOutputSignalMemory(0u));
-                outputEpZ = reinterpret_cast<float32 *>(GetOutputSignalMemory(1u));
+                
+        if (ok) {
+                outputEpIp = reinterpret_cast<float32 *>(GetOutputSignalMemory(0u));
+                outputEpR = reinterpret_cast<float32 *>(GetOutputSignalMemory(1u));
+                outputEpZ = reinterpret_cast<float32 *>(GetOutputSignalMemory(2u));
             }
         }
-
+    
         // Install message filter
         ReferenceT<RegisteredMethodsMessageFilter> registeredMethodsMessageFilter("RegisteredMethodsMessageFilter");
 
@@ -349,10 +375,64 @@ namespace MARTe {
     }
 
     bool MagneticRZPosGAM::Execute() {
-        /* inputElectricOuter - inputElectricInner */
-        *outputEpR =  (inputSignal[2] - inputOffset[2]) - 
-            (inputSignal[1] - inputOffset[1]);
-        *outputEpZ =  inputSignal[0] - inputOffset[0];
+
+        for (MARTe::uint32 i = 1u; i <= numberOfInputElements; i++){ // Sums all Mirnov coils measurements
+            *outputEpIp += inputSignal[i]
+        }
+        *outputEpIp *= ((2 * M_PI* 0.055)/12) * (1/4.0*M_PI*1e-7)  // TO DO: Define arch value i.e. distance between 2 magnetic probes - use M_PI if <cmath> is included); confirm
+                                              // Mirnov probe radius (5.5cm according to Rivera, 2021); confirm mu0 value (4.0*M_PI*1e-7 H/m)
+        /*
+        R_0 = 0.46 m - major radius
+        
+        --/ Define Mirnov probes radii according to Rivera, 2021 Fig. 4.16A /--
+        R_1 = R_12 = (R_1&12) = ?
+        R_2 = R_11 = (R_2&11) = ?
+        R_3 = R_10 = (R_3&10) = ?
+        R_4 = R_9 = (R_4&9) = ?
+        R_5 = R_8 = (R_5&8) = ?
+        R_6 = R_7 = (R_6&7) = ?
+        -----------------------------------------------------------------------
+
+        */
+        /* For example 
+
+        *outputEpR += inputSignal[1u]*(R_1&12 - 0.46)
+        *outputEpR += inputSignal[13u]*(R_1&12 - 0.46)
+        .
+        .
+        .
+        *outputEpR *= (2 * M_PI* 0.055)/12
+        *outputEpR *= 1/*outputEpIp // This calculation will introduce errors during AC operation, consider defining either a
+                                    // 'default value' for *outputEpR or use 'previous *outputEpR' if «abs(*outputEpIp) < threshold_Ip» 
+        */
+        
+        /*
+        z_0 = 0.0 m - nominal vertical position
+        
+        --/ Define Mirnov probes radii according to Rivera, 2021 Fig. 4.16A /--
+        z_1 = z_6 = (z_1&6) = ?
+        z_2 = z_5 = (z_2&15) = ?
+        z_3 = z_4 = (z_3&4) = ?
+        z_7 = z_12 = (z_7&12) = ?
+        z_8 = z_11 = (z_8&11) = ?
+        z_9 = z_10 = (z_9&10) = ?
+        -----------------------------------------------------------------------
+
+        */
+        /* For example 
+
+        *outputEpZ += inputSignal[1u]*(z_1&6 - 0.0)
+        *outputEpZ += inputSignal[6u]*(z_1&6 - 0.0)
+        .
+        .
+        .
+        *outputEpZ *= (2 * M_PI* 0.055)/12
+        *outputEpZ *= 1/*outputEpIp // This calculation will introduce errors during AC operation, consider defining either a
+                                    // 'default value' for *outputEpZ or use 'previous *outputEpZ' if «abs(*outputEpIp) < threshold_Ip» 
+        */
+        
+        // =  inputSignal[0] - inputOffset[0];
+        
         //*outputEpZ =  inputSignal[0] - inputSignal[3];
 
         /* update the last value arrays */

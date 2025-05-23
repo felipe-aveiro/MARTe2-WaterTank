@@ -111,7 +111,7 @@ namespace MARTe {
              * </li>
              * <li> Reset the GAM if it was not executed in the previous state. e.i. if the GAM goes from
              * "A" to "B" and then from "B" to "C" it will not be reset. In the other hand if the GAM goes
-             * from "A" to "B" and then from "C" to "D" the GAM will be reset the states.
+             * from "A" to "B" and then from "C" to "D" the GAM will reset the states.
              * </li>
              * </ul>
              * @param[in] currentStateName indicates the current state.
@@ -174,6 +174,7 @@ namespace MARTe {
              * The output signals
              */
             // MARTe::float32 **outputSignals;
+            float32 *outputEpIp;
             float32 *outputEpR;
             float32 *outputEpZ;
 
