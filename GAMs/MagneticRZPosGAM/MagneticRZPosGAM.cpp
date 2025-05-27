@@ -43,7 +43,7 @@ namespace MARTe {
 /**
  * The number of signals
  */
-    const  uint32 EP_NUM_INPUTS  = 13u;
+    const  uint32 EP_NUM_INPUTS  = 12u;
     const  uint32 EP_NUM_OUTPUTS = 3u;
 
 /*---------------------------------------------------------------------------*/
@@ -54,11 +54,11 @@ namespace MARTe {
                 GAM(),
                 MessageI() // Should the method be registered as a messageable function?
                 {
-        gain = 0u;
-        numberOfSamplesAvg = 1u;
-        numberOfInputElements = 0u;
+        gain = 0u; // necessary?
+        numberOfSamplesAvg = 1u; // necessary?
+        numberOfInputElements = 0u; // necessary?
 
-        triggerSdas = NULL_PTR(MARTe::uint32 *);
+        //--------------Intputs----------------
         inputMirnov0    = NULL_PTR(MARTe::float32 *);
         inputMirnov1  = NULL_PTR(MARTe::float32 *);
         inputMirnov2  = NULL_PTR(MARTe::float32 *);
@@ -71,41 +71,46 @@ namespace MARTe {
         inputMirnov9  = NULL_PTR(MARTe::float32 *);
         inputMirnov10  = NULL_PTR(MARTe::float32 *);
         inputMirnov11 = NULL_PTR(MARTe::float32 *);
+        //--------------------------------------
+        
+        triggerSdas = NULL_PTR(MARTe::uint32 *); // necessary?
         /*
-        inputSignal = NULL; // NULL_PTR(MARTe::float32*);
+        inputSignal = NULL; // NULL_PTR(MARTe::float32*); // necessary?
         */
 
+        //--------------Outputs----------------
         outputEpIp = NULL_PTR(MARTe::float32 *);
         outputEpR = NULL_PTR(MARTe::float32 *);
         outputEpZ = NULL_PTR(MARTe::float32 *);
+        //--------------------------------------
 
         //outputSignals = NULL_PTR(MARTe::float32 **);
         
-        resetInEachState = false;
+        resetInEachState = false; // necessary?
 
-        lastInputs = NULL_PTR(MARTe::float32**);
-        lastTriggerSdas = 0u;
+        lastInputs = NULL_PTR(MARTe::float32**); // necessary?
+        lastTriggerSdas = 0u; // necessary?
     }
 
-    MagneticRZPosGAM::~MagneticRZPosGAM() {
-        //if (inputSignal != NULL_PTR(MARTe::float32 **)) {
-       //     delete[] inputSignal;
-        //}
-        inputSignal =  NULL; //NULL_PTR(MARTe::float32*);
-        /*if (outputSignals != NULL_PTR(MARTe::float32 **)) {
-            delete[] outputSignals;
-        }
-        */
-        if (lastInputs != NULL_PTR(MARTe::float32**)) {
-            MARTe::uint32 k;
-            for (k=0u; k < EP_NUM_INPUTS; k++) {
-                if (lastInputs[k] != NULL_PTR(MARTe::float32*)) {
-                    delete[] lastInputs[k];
-                }
-            }
-            delete[] lastInputs;
-        }
-    }
+    MagneticRZPosGAM::~MagneticRZPosGAM() {                         // |
+        //if (inputSignal != NULL_PTR(MARTe::float32 **)) {         // |
+       //     delete[] inputSignal;                                 // |
+        //}                                                         // |
+        inputSignal =  NULL; //NULL_PTR(MARTe::float32*);           // |
+        /*if (outputSignals != NULL_PTR(MARTe::float32 **)) {       // |
+            delete[] outputSignals;                                 // |
+        }                                                           // |
+        */                                                          // |
+        if (lastInputs != NULL_PTR(MARTe::float32**)) {             // | } -> necessary?
+            MARTe::uint32 k;                                        // |
+            for (k=0u; k < EP_NUM_INPUTS; k++) {                    // |
+                if (lastInputs[k] != NULL_PTR(MARTe::float32*)) {   // |
+                    delete[] lastInputs[k];                         // |
+                }                                                   // |
+            }                                                       // |
+            delete[] lastInputs;                                    // |
+        }                                                           // |
+    }                                                               // |
 
     bool MagneticRZPosGAM::Initialise(MARTe::StructuredDataI & data) {
         using namespace MARTe;
@@ -114,7 +119,7 @@ namespace MARTe {
             REPORT_ERROR(ErrorManagement::ParametersError, "Could not Initialise the GAM");
         }
         if (ok) {
-            ok = data.Read("Gain", gain);
+            ok = data.Read("Gain", gain);           // necessary?
             if (!ok) {
                 REPORT_ERROR(ErrorManagement::ParametersError, "The parameter Gain shall be set"); // Define Gain parameter
             }
@@ -123,7 +128,7 @@ namespace MARTe {
             REPORT_ERROR(ErrorManagement::Information, "Parameter Gain set to %d", gain);
         }
         if (ok) {
-            ok = data.Read("NumberOfSamplesAvg", numberOfSamplesAvg);
+            ok = data.Read("NumberOfSamplesAvg", numberOfSamplesAvg);   // necessary?
             if (!ok) {
                 REPORT_ERROR(ErrorManagement::ParametersError, 
                         "The parameter NumberOfSamplesAvg shall be set"); // Define NumberOfSamplesAvg
@@ -135,7 +140,7 @@ namespace MARTe {
         }
         if (ok) {
             uint32 auxResetInEachState = 0u;
-            ok = data.Read("ResetInEachState", auxResetInEachState);
+            ok = data.Read("ResetInEachState", auxResetInEachState);    // necessary?
             if (!ok) {
                 REPORT_ERROR(ErrorManagement::InitialisationError, "Error reading ResetInEachState");
             }
@@ -158,13 +163,14 @@ namespace MARTe {
 
     bool MagneticRZPosGAM::Setup() {
         using namespace MARTe;
+        /* *************************************************** */
+        //-------------------InputSignals-----------------------
         uint32 numberOfInputSignals = GetNumberOfInputSignals();
-        bool ok = (numberOfInputSignals == 13u);
+        bool ok = (numberOfInputSignals == 12u);
         if (!ok) {
-            REPORT_ERROR(ErrorManagement::ParametersError, "The number of input signals shall be equal to 13. numberOfInputSignals = %d ", numberOfInputSignals);
+            REPORT_ERROR(ErrorManagement::ParametersError, "The number of input signals shall be equal to 12. numberOfInputSignals = %d ", numberOfInputSignals);
         }
         if (ok) {
-
             StreamString inputSignalName;
             ok = GetSignalName(InputSignals, 0u, inputSignalName);
             TypeDescriptor inputSignalType = GetSignalType(InputSignals, 0u);
@@ -246,58 +252,59 @@ namespace MARTe {
                 ok = GetSignalNumberOfElements(InputSignals, 1u, numberOfInputElements);
             }
             if (ok) {
-                ok = (numberOfInputElements == 13u);
+                ok = (numberOfInputElements == 1u);
             }
             if (!ok) {
                 REPORT_ERROR(ErrorManagement::ParametersError,
-                        "The number of input signal elements shall be equal to 13. numberOfInputElements(%s) = %d", inputSignalName.Buffer(), numberOfInputElements);
+                        "The number of input signal elements shall be equal to 1. numberOfInputElements(%s) = %d", inputSignalName.Buffer(), numberOfInputElements);
             }
 
 
         }
         if (ok) {
-            lastInputs = new float32*[numberOfInputElements];
-            uint32 n;
-            for (n = 0u; n < numberOfInputElements ; n++) {
-                if (numberOfSamplesAvg > 1u) {
-                    lastInputs[n] = new float32[numberOfSamplesAvg - 1u];
-                    if (lastInputs[n] != NULL_PTR(MARTe::float32*)) {
-                        uint32 i;
-                        for (i = 0u; i < (numberOfSamplesAvg - 1u); i++) {
-                            lastInputs[n][i] = 0.0F;
-                        }
-                    }
-                }
-            }
-        }
+            lastInputs = new float32*[numberOfInputElements];                   // |
+            uint32 n;                                                           // |
+            for (n = 0u; n < numberOfInputElements ; n++) {                     // |
+                if (numberOfSamplesAvg > 1u) {                                  // |
+                    lastInputs[n] = new float32[numberOfSamplesAvg - 1u];       // |
+                    if (lastInputs[n] != NULL_PTR(MARTe::float32*)) {           // |
+                        uint32 i;                                               // |
+                        for (i = 0u; i < (numberOfSamplesAvg - 1u); i++) {      // |}-> necessary?
+                            lastInputs[n][i] = 0.0F;                            // |
+                        }                                                       // |
+                    }                                                           // |
+                }                                                               // |
+            }                                                                   // |
+        }                                                                       // |
         if (ok) {
-            triggerSdas = reinterpret_cast<uint32 *>(GetInputSignalMemory(0u));
+            triggerSdas = reinterpret_cast<uint32 *>(GetInputSignalMemory(0u)); // necessary?
+
             /*
             inputSignal   = reinterpret_cast<float32 *>(GetInputSignalMemory(1u));
             */
 
            /*---------------------------------------------------------------------------*/
-           /*      DEFINE WHICH MIRNOV INPUTS CORRELATE TO RIVERA, 2021 FIG. 4.16A      */
+           /*      DEFINE WHICH MIRNOV INPUTS CORRELATE TO Corona, 2021 FIG. 4.16A      */
            /*---------------------------------------------------------------------------*/
 
-            inputMirnov0    = reinterpret_cast<float32 *>(GetInputSignalMemory(1u));
-            inputMirnov1  = reinterpret_cast<float32 *>(GetInputSignalMemory(2u));
-            inputMirnov2  = reinterpret_cast<float32 *>(GetInputSignalMemory(3u));
-            inputMirnov3 = reinterpret_cast<float32 *>(GetInputSignalMemory(4u));
-            inputMirnov4    = reinterpret_cast<float32 *>(GetInputSignalMemory(5u));
-            inputMirnov5  = reinterpret_cast<float32 *>(GetInputSignalMemory(6u));
-            inputMirnov6  = reinterpret_cast<float32 *>(GetInputSignalMemory(7u));
-            inputMirnov7 = reinterpret_cast<float32 *>(GetInputSignalMemory(8u));
-            inputMirnov8    = reinterpret_cast<float32 *>(GetInputSignalMemory(9u));
-            inputMirnov9  = reinterpret_cast<float32 *>(GetInputSignalMemory(10u));
-            inputMirnov10  = reinterpret_cast<float32 *>(GetInputSignalMemory(11u));
-            inputMirnov11 = reinterpret_cast<float32 *>(GetInputSignalMemory(12u));
+            inputMirnov0    = reinterpret_cast<float32 *>(GetInputSignalMemory(0u));
+            inputMirnov1  = reinterpret_cast<float32 *>(GetInputSignalMemory(1u));
+            inputMirnov2  = reinterpret_cast<float32 *>(GetInputSignalMemory(2u));
+            inputMirnov3 = reinterpret_cast<float32 *>(GetInputSignalMemory(3u));
+            inputMirnov4    = reinterpret_cast<float32 *>(GetInputSignalMemory(4u));
+            inputMirnov5  = reinterpret_cast<float32 *>(GetInputSignalMemory(5u));
+            inputMirnov6  = reinterpret_cast<float32 *>(GetInputSignalMemory(6u));
+            inputMirnov7 = reinterpret_cast<float32 *>(GetInputSignalMemory(7u));
+            inputMirnov8    = reinterpret_cast<float32 *>(GetInputSignalMemory(8u));
+            inputMirnov9  = reinterpret_cast<float32 *>(GetInputSignalMemory(9u));
+            inputMirnov10  = reinterpret_cast<float32 *>(GetInputSignalMemory(10u));
+            inputMirnov11 = reinterpret_cast<float32 *>(GetInputSignalMemory(11u));
 
             REPORT_ERROR(ErrorManagement::Information, "InputSignals reinterpret_cast OK");
         }
 
-
-        // OutputSignals
+        /* *************************************************** */
+        //-------------------OutputSignals-----------------------
         uint32 numberOfOutputSignals = GetNumberOfOutputSignals();
         ok = (numberOfOutputSignals == 3u);
         if (!ok) {
@@ -359,15 +366,15 @@ namespace MARTe {
         }
     
         // Install message filter
-        ReferenceT<RegisteredMethodsMessageFilter> registeredMethodsMessageFilter("RegisteredMethodsMessageFilter");
+        ReferenceT<RegisteredMethodsMessageFilter> registeredMethodsMessageFilter("RegisteredMethodsMessageFilter"); // necessary?
 
         if (ok) {
-            ok = registeredMethodsMessageFilter.IsValid();
+            ok = registeredMethodsMessageFilter.IsValid(); // necessary?
         }
 
         if (ok) {
-            registeredMethodsMessageFilter->SetDestination(this);
-            ok = InstallMessageFilter(registeredMethodsMessageFilter);
+            registeredMethodsMessageFilter->SetDestination(this); // necessary?
+            ok = InstallMessageFilter(registeredMethodsMessageFilter); // necessary?
         }
 
         return ok;
@@ -379,12 +386,13 @@ namespace MARTe {
         for (MARTe::uint32 i = 1u; i <= numberOfInputElements; i++){ // Sums all Mirnov coils measurements
             *outputEpIp += inputSignal[i]
         }
-        *outputEpIp *= ((2 * M_PI* 0.055)/12) * (1/4.0*M_PI*1e-7)  // TO DO: Define arch value i.e. distance between 2 magnetic probes - use M_PI if <cmath> is included); confirm
-                                              // Mirnov probe radius (5.5cm according to Rivera, 2021); confirm mu0 value (4.0*M_PI*1e-7 H/m)
+        *outputEpIp *= ((2 * M_PI* 0.093)/12) * (1/4.0*M_PI*1e-7)  // TO DO: Define arch value i.e. distance between 2 magnetic probes - use M_PI if <cmath> is included); confirm
+                                              // Mirnov probe radius (9.3cm according to Valcárcel, 2006 - Fast Feedback Control for Plasma Positioning With a PCI Hybrid DSP/FPGA Board); confirm mu0 value (4.0*M_PI*1e-7 H/m)
         /*
         R_0 = 0.46 m - major radius
         
-        --/ Define Mirnov probes radii according to Rivera, 2021 Fig. 4.16A /--
+        --/ Define Mirnov probes radii according to Corona, 2021 Fig. 4.16A /--
+        // r_probe = 93 mm from the vacuum chamber's center
         R_1 = R_12 = (R_1&12) = ?
         R_2 = R_11 = (R_2&11) = ?
         R_3 = R_10 = (R_3&10) = ?
@@ -409,7 +417,7 @@ namespace MARTe {
         /*
         z_0 = 0.0 m - nominal vertical position
         
-        --/ Define Mirnov probes radii according to Rivera, 2021 Fig. 4.16A /--
+        --/ Define Mirnov probes radii according to Corona, 2021 Fig. 4.16A /--
         z_1 = z_6 = (z_1&6) = ?
         z_2 = z_5 = (z_2&15) = ?
         z_3 = z_4 = (z_3&4) = ?
@@ -436,17 +444,18 @@ namespace MARTe {
         //*outputEpZ =  inputSignal[0] - inputSignal[3];
 
         /* update the last value arrays */
-        for (MARTe::uint32 i = 0u; i < numberOfInputElements; i++) {
+        for (MARTe::uint32 i = 0u; i < numberOfInputElements; i++) {                // |
+                                                                                    // |
+            if (numberOfSamplesAvg > 2u) {                                          // |
+                for (MARTe::uint32 k = (numberOfSamplesAvg - 1u); k > 0u; k--) {    // |
+                    lastInputs[i][k] = lastInputs[i][k - 1];                        // |
+                }                                                                   // |}-> necessary?
+            }                                                                       // |
+            if (numberOfSamplesAvg > 1u) {                                          // |
+                lastInputs[i][0] = inputSignal[i];                                  // |
+            }                                                                       // |
+        }                                                                           // |
 
-            if (numberOfSamplesAvg > 2u) {
-                for (MARTe::uint32 k = (numberOfSamplesAvg - 1u); k > 0u; k--) {
-                    lastInputs[i][k] = lastInputs[i][k - 1];
-                }
-            }
-            if (numberOfSamplesAvg > 1u) {
-                lastInputs[i][0] = inputSignal[i];
-            }
-        }
         /*
         if (numberOfSamplesAvg > 1u) {
             lastInputs[0][0] = *inputElectricTop;
@@ -456,12 +465,12 @@ namespace MARTe {
                                          
         lastInputs[i][0] = input[i][numberOfSamples - 1u];
         }
-*/
+        */
 
         /* Should use a MARTe2 Message. 
-         * Here for Sdas recorded signel with Trigger pseudo-signal
+         * Here for Sdas recorded signal with Trigger pseudo-signal
          * */
-        if ((lastTriggerSdas == 0u) && (*triggerSdas == 1u)) {
+        if ((lastTriggerSdas == 0u) && (*triggerSdas == 1u)) {  // necessary?
             CalcOffSets();
         }
         lastTriggerSdas = *triggerSdas;
@@ -528,30 +537,30 @@ namespace MARTe {
         return ok;
     }
 
-    ErrorManagement::ErrorType MagneticRZPosGAM::CalcOffSets() {
-
-        ErrorManagement::ErrorType ret = MARTe::ErrorManagement::NoError;
-        REPORT_ERROR(ErrorManagement::Information, 
-                        "CalcOffSets. Inputs:%f, %f, %f, %f.",
-                        inputSignal[0],
-                        inputSignal[1],
-                        inputSignal[2],
-                        inputSignal[3]);
-        if (numberOfSamplesAvg > 1u) {
-            for (uint32 i = 0u; i < EP_NUM_INPUTS; i++) {
-                inputOffset[i] = 0.0f;
-                for (uint32 k =  0 ; k < numberOfSamplesAvg; k++) {
-                    inputOffset[i] += lastInputs[i][k];
-                }
-                inputOffset[i] /= numberOfSamplesAvg;
-            }
-            REPORT_ERROR(ErrorManagement::Information, 
-                        "CalcOffSets. Offset:%f, %f, %f, %f.",
-                        inputOffset[0],
-                        inputOffset[1],
-                        inputOffset[2],
-                        inputOffset[3]);
-        }
+    ErrorManagement::ErrorType MagneticRZPosGAM::CalcOffSets() {            // |
+                                                                            // |
+        ErrorManagement::ErrorType ret = MARTe::ErrorManagement::NoError;   // |
+        REPORT_ERROR(ErrorManagement::Information,                          // |
+                        "CalcOffSets. Inputs:%f, %f, %f, %f.",              // |
+                        inputSignal[0],                                     // |
+                        inputSignal[1],                                     // |
+                        inputSignal[2],                                     // |
+                        inputSignal[3]);                                    // |
+        if (numberOfSamplesAvg > 1u) {                                      // |
+            for (uint32 i = 0u; i < EP_NUM_INPUTS; i++) {                   // |
+                inputOffset[i] = 0.0f;                                      // |
+                for (uint32 k =  0 ; k < numberOfSamplesAvg; k++) {         // |}-> necessary?
+                    inputOffset[i] += lastInputs[i][k];                     // |
+                }                                                           // |
+                inputOffset[i] /= numberOfSamplesAvg;                       // |
+            }                                                               // |
+            REPORT_ERROR(ErrorManagement::Information,                      // |
+                        "CalcOffSets. Offset:%f, %f, %f, %f.",              // |
+                        inputOffset[0],                                     // |
+                        inputOffset[1],                                     // |
+                        inputOffset[2],                                     // |
+                        inputOffset[3]);                                    // |
+        }                                                                   // |
 
         return ret;
     }
