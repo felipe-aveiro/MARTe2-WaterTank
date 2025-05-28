@@ -47,10 +47,11 @@ namespace MARTe {
      *
      * +GAM_MagneticRZPos = {
      *     Class = MagneticRZPosGAM
-     *     Gain = 5 //Compulsory
-     *     NumberOfSamplesAvg  = 4 //Compulsory
-     *     ResetInEachState = 0//Compulsory. 1--> reset in each state, 0--> reset if the previous state is different from the next state
-
+     *     ------------------------
+     *     Gain = 5 //Compulsory    |}-> might be removed in future versions
+     *     ------------------------
+     *     ResetInEachState = 0//Compulsory. 1--> reset in each state, 0--> reset if the previous state is different from the next state |}-> might be removed in future versions
+           ------------------------
      *     InputSignals = {
      *         Signal1 = {
      *             DataSource = "DDB1"
@@ -65,7 +66,11 @@ namespace MARTe {
      *     }
      * }
      */
+
+     /*
     class MagneticRZPosGAM : public MARTe::GAM, public MARTe::MessageI {
+    */ 
+    class MagneticRZPosGAM : public MARTe::GAM {
         public:
             CLASS_REGISTER_DECLARATION()
                 /**
@@ -80,7 +85,7 @@ namespace MARTe {
 
             /**
              * @brief Reads the Gain from the configuration file.
-             * @param[in] data see GAM::Initialise. The parameter Gain shall exist and will be read as an uint32.
+             * @param[in] data see GAM::Initialise. The parameter Gain shall exist and will be read as an uint32.   |}-> might be removed in future versions
              * @return true if the parameter Gain can be read.
              */
             virtual bool Initialise(MARTe::StructuredDataI & data);
@@ -91,9 +96,8 @@ namespace MARTe {
              * @return true if the pre-conditions are met.
              * @pre
              *   SetConfiguredDatabase() &&
-             *   GetNumberOfInputSignals() == 4 
-             *   GetNumberOfInputSignals() == 
-             *   GetSignalType(InputSignals, 0) == GetSignalType(OutputSignals, 0) == uint32 &&
+             *   GetNumberOfInputSignals() == 13 
+             *   GetSignalType(InputSignals, 0) == GetSignalType(OutputSignals, 0) == float32 &&
              */
             virtual bool Setup();
 
@@ -107,29 +111,32 @@ namespace MARTe {
              * @brief Reset the states if required.
              * @details This functions has two operations modes:
              * <ul>
-             * <li> Reset the GAM states every time the state changes.
+             * <li> Reset the GAM states every time the state changes.      |}-> update information
              * </li>
-             * <li> Reset the GAM if it was not executed in the previous state. e.i. if the GAM goes from
-             * "A" to "B" and then from "B" to "C" it will not be reset. In the other hand if the GAM goes
-             * from "A" to "B" and then from "C" to "D" the GAM will reset the states.
+             * <li> Reset the GAM if it was not executed in the previous state. e.i. if the GAM goes from       |
+             * "A" to "B" and then from "B" to "C" it will not be reset. In the other hand if the GAM goes      |}-> update information
+             * from "A" to "B" and then from "C" to "D" the GAM will reset the states.                          |
              * </li>
              * </ul>
-             * @param[in] currentStateName indicates the current state.
-             * @param[in] nextStateName indicates the next state.
-             * @return true if the state vectors are not NULL.
+             * @param[in] currentStateName indicates the current state.     |
+             * @param[in] nextStateName indicates the next state.           |}-> update information
+             * @return true if the state vectors are not NULL.              |
              */
              virtual bool PrepareNextState(const char8 * const currentStateName,
                     const char8 * const nextStateName);
 
 
             /**
-             * @brief CalcOffSets method.
-             * @details The method is registered as a messageable function.
-             * @return ErrorManagement::NoError if the pre-conditions are met, ErrorManagement::ParametersError
-             * otherwise.
-               */
-
+             * @brief CalcOffSets method.                                                                               |
+             * @details The method is registered as a messageable function.                                             |
+             * @return ErrorManagement::NoError if the pre-conditions are met, ErrorManagement::ParametersError         |}-> might be removed in future versions
+             * otherwise.                                                                                               |
+             */                                                                                                       
+            
+            /*---------------- might be removed in future versions-----------------*/
+            /*
             MARTe::ErrorManagement::ErrorType CalcOffSets();
+            -----------------------------------------------------------------------*/
 
             /**
              * @brief Export information about the component
@@ -139,54 +146,54 @@ namespace MARTe {
         private:
 
             /**
-             * The configured gain.
-             */
+             * The configured gain. |}-> might be removed in future versions
+             
             MARTe::uint32 gain;
-
-            /**
-             * The configured numberOfSamplesAvg.
-             */
-            uint32 numberOfSamplesAvg;
-
-            /**
-             * The input signals
-             */
-
-            uint32 *triggerSdas;
-            /**
-             * The input Electric Probes signals
             */
-            float32 *inputSignal;
 
+            /**
+             * The input Magnetic Probes (Mirnov Coils) signals
+            */
             /*
-            MARTe::float32 *inputElectricTop;
-            MARTe::float32 *inputElectricInner;
-            MARTe::float32 *inputElectricOuter;
-            MARTe::float32 *inputElectricBottom;
+            MARTe::float32 *inputMirnov[12];
             */
+            MARTe::float32 *inputMirnov0;
+            MARTe::float32 *inputMirnov1;
+            MARTe::float32 *inputMirnov2;
+            MARTe::float32 *inputMirnov3;
+            MARTe::float32 *inputMirnov4;
+            MARTe::float32 *inputMirnov5;
+            MARTe::float32 *inputMirnov6;
+            MARTe::float32 *inputMirnov7;
+            MARTe::float32 *inputMirnov8;
+            MARTe::float32 *inputMirnov9;
+            MARTe::float32 *inputMirnov10;
+            MARTe::float32 *inputMirnov11;
+
+            /**
+             * The Sdas trigger signal
+             */
+
+            MARTe::uint32 *triggerSdas;
+
             uint32 numberOfInputElements;
-
+            
+            /*
             float32 inputOffset[4];
-
             MARTe::float32 **lastInputs;
+            */
 
             /**
              * The output signals
              */
-            // MARTe::float32 **outputSignals;
-            float32 *outputEpIp;
-            float32 *outputEpR;
-            float32 *outputEpZ;
+            MARTe::float32 *outputMpIp;
+            MARTe::float32 *outputMpR;
+            MARTe::float32 *outputMpZ;
 
             /**
              * Indicates the behaviour of the reset when MARTe changes the state
              */
             bool resetInEachState;
-
-            /**
-             * Remember the last executed state.
-             */
-            StreamString lastStateExecuted;
 
             /**
              * Flag to detect SDAS Trigger Edge.
