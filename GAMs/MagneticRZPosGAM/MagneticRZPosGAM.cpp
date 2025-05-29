@@ -99,8 +99,11 @@ namespace MARTe {
         /*
         outputSignals = NULL_PTR(MARTe::float32 **);
         */
-
+       
+        /*
         resetInEachState = false; // necessary?
+       */
+
 
         lastTriggerSdas = 0u; // necessary?
     }
@@ -151,6 +154,7 @@ namespace MARTe {
         }
         */
 
+        /*
         if (ok) {
             uint32 auxResetInEachState = 0u;
             ok = data.Read("ResetInEachState", auxResetInEachState);    // necessary?
@@ -170,6 +174,7 @@ namespace MARTe {
                 }
             }
         }
+        */
 
         return ok;
     }
@@ -188,7 +193,7 @@ namespace MARTe {
             StreamString inputSignalName;
             ok = GetSignalName(InputSignals, 0u, inputSignalName);
             TypeDescriptor inputSignalType = GetSignalType(InputSignals, 0u);
-            ok = (inputSignalType == UnsignedInteger32Bit);
+            ok = (inputSignalType == Float32Bit); 
             if (!ok) {
                 const char8 * const inputSignalTypeStr = TypeDescriptor::GetTypeNameFromTypeDescriptor(inputSignalType);
                 REPORT_ERROR(ErrorManagement::ParametersError,
@@ -395,7 +400,7 @@ namespace MARTe {
             *outputMpIp += inputMirnov[i];
         }
         */
-        *outputMpIp += *inputMirnov0;
+        *outputMpIp = *inputMirnov0;
         *outputMpIp += *inputMirnov1;
         *outputMpIp += *inputMirnov2;
         *outputMpIp += *inputMirnov3;

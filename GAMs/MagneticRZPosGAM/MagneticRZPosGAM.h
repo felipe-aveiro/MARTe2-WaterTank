@@ -193,7 +193,10 @@ namespace MARTe {
             /**
              * Indicates the behaviour of the reset when MARTe changes the state
              */
+            
+            /*
             bool resetInEachState;
+            */
 
             /**
              * Flag to detect SDAS Trigger Edge.
