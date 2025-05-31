@@ -40,8 +40,7 @@ def readPendingDatagrams():
         time = np.frombuffer(data, dtype=np.uint32)
         print(f"Counter: {time[0]}, Time: {time[1]} \u00b5s")
         values64 = np.frombuffer(data, dtype=np.float64)
-        print(f"Reference: {values64[0]}, Actual Value: {values64[1]}")
-
+        print(f"Reference: {values64[1]}, Actual Value: {values64[2]}")
         data2[:-1] = data2[1:]  # shift data in the array one sample left
         data2[-1] = values64[1]
         ptr2 += 1
@@ -99,8 +98,7 @@ def update():
 
 timer = pg.QtCore.QTimer()
 timer.timeout.connect(update)
-timer.start(500)
+timer.start(100)
 
 if __name__ == '__main__':
     pg.exec()
-
