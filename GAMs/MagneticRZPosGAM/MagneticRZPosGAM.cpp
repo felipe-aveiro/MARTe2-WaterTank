@@ -413,7 +413,7 @@ namespace MARTe {
         *outputMpIp += *inputMirnov10;
         *outputMpIp += *inputMirnov11;
 
-        *outputMpIp *= ((2.0 * PI* 0.0935)/12.0) * (1.0/(4.0*PI*1.0E-7));  // TO DO: confirm Mirnov probe radius (9.35cm according to Valcárcel, 2008
+        *outputMpIp *= ((2.0 * PI* 0.093)/12.0) * (1.0/4.0*PI*1.0E-7);  // TO DO: confirm Mirnov probe radius (9.3cm according to Valcárcel, 2006 - Fast Feedback Control for Plasma Positioning With a PCI Hybrid DSP/FPGA Board);
                                                                      // confirm mu0 value (4.0*PI*1E-7 H/m)
         *outputMpR = 0;
         *outputMpZ = 0;
@@ -422,7 +422,7 @@ namespace MARTe {
         R_0 = 0.46 m - major radius
         
         --/ Define Mirnov probes radii according to Corona, 2021 Fig. 4.16A /--
-        // r_probe = 935 mm from the vacuum chamber's center
+        // r_probe = 93 mm from the vacuum chamber's center
         R_1 = R_12 = (R_1&12) = ?
         R_2 = R_11 = (R_2&11) = ?
         R_3 = R_10 = (R_3&10) = ?
