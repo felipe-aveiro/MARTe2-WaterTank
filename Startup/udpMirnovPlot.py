@@ -1,7 +1,8 @@
 # from time import perf_counter
 
 from PySide2.QtNetwork import QUdpSocket, QHostAddress
-
+from PySide2.QtWidgets import QApplication, QToolTip, QShortcut
+from PySide2.QtGui import QCursor, QKeySequence 
 
 import numpy as np
 
@@ -13,17 +14,25 @@ from pyqtgraph.Qt import (
 
 from pyqtgraph.Qt.QtWidgets import (
         QVBoxLayout,
-        QMessageBox,)
+        QMessageBox)
+
 # from socket import socket, AF_INET, SOCK_DGRAM
 
 UDP_PORT = 7755       # Target port
 # from PyQt6.QtNetwork import QUdpSocket, QHostAddress
 
-win = pg.GraphicsLayoutWidget(show=True)
+win = pg.GraphicsLayoutWidget()
+win.showFullScreen()
 win.setWindowTitle('Scrolling Mirnov Plots')
 
+def exit_fullscreen():
+    win.showNormal()
+
+shortcut = QShortcut(QKeySequence("Escape"), win)
+shortcut.activated.connect(exit_fullscreen)
+
 N_CHANNELS = 12
-BUFFER_SIZE = 300
+BUFFER_SIZE = 500
 
 # -- update data in the array such that plot appears to scroll
 
@@ -55,8 +64,22 @@ def readPendingDatagrams():
             curves[i].setPos(ptr_mirnov, 0)
 
         
-    ptr_mirnov += 1
+    ptr_mirnov += 5
 
+def mousePressEvent(evt):
+    if evt.button() == QtCore.Qt.RightButton:
+        pos = evt.pos()
+        mouse_point = mirnov_plot.vb.mapSceneToView(pos)
+        x = int(mouse_point.x())
+        if 0 <= x < BUFFER_SIZE:
+            vals = [data_buffers[i][x] for i in range(N_CHANNELS)]
+            tooltip_text = '\n'.join([f'Mirnov {i}: {vals[i]:.3f}' for i in range(N_CHANNELS)])
+            QToolTip.showText(QCursor.pos(), tooltip_text)
+        evt.accept()
+    else:
+        super(type(mirnov_plot.vb), mirnov_plot.vb).mousePressEvent(evt)
+
+mirnov_plot.vb.mousePressEvent = mousePressEvent
 
 # Create a UDP socket
 # Notice the use of SOCK_DGRAM for UDP packets
@@ -74,8 +97,9 @@ udpSocket.readyRead.connect(readPendingDatagrams)
 
 timer = pg.QtCore.QTimer()
 #timer.timeout.connect(update)
-timer.start(100)
+timer.start(50)
 
 if __name__ == '__main__':
+    app = QApplication.instance() or QApplication([])
     pg.exec()
 
