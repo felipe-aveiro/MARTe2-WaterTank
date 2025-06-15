@@ -12,7 +12,7 @@ MARTe2-WaterTank is a project built on top of the [***MARTe2***](https://vcis.f4
   - [using native configurable PID controller](Configurations/WaterTank_Pid_udp.cfg)
   - [using configurable PID controller created with a Simulink user-defined function block](Configurations/WaterTank_Simulink_PID.cfg)
 -  Data visualization leveraging Python codes
-   -  [**TO DO**: Real-time visualization using `pyqtgraph`](Startup/udpPlot.py)
+   -  [Real-time visualization using `pyqtgraph`]((Startup/udpMirnovPlot.py))
    -  [Plot generation using `matplotlib`]((Startup/udpFixedPlot.py))
 - Startup scripts and modular configuration
 
