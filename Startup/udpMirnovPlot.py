@@ -2,7 +2,7 @@
 
 from PySide2.QtNetwork import QUdpSocket, QHostAddress
 from PySide2.QtWidgets import QApplication, QToolTip, QShortcut
-from PySide2.QtGui import QCursor, QKeySequence 
+from PySide2.QtGui import  QKeySequence 
 
 import numpy as np
 
@@ -44,7 +44,7 @@ data_buffers = [np.empty(BUFFER_SIZE) for _ in range(N_CHANNELS)]
 curves = []
 
 for i in range(N_CHANNELS):
-    curve = mirnov_plot.plot(pen=pg.intColor(i, hues=N_CHANNELS), name=f'Mirnov_{i}')
+    curve = mirnov_plot.plot(pen=pg.intColor(i, hues=N_CHANNELS), name=f'Probe{i+1}')
     curves.append(curve)
 
 ptr_mirnov = 0
@@ -65,21 +65,6 @@ def readPendingDatagrams():
 
         
     ptr_mirnov += 5
-
-def mousePressEvent(evt):
-    if evt.button() == QtCore.Qt.RightButton:
-        pos = evt.pos()
-        mouse_point = mirnov_plot.vb.mapSceneToView(pos)
-        x = int(mouse_point.x())
-        if 0 <= x < BUFFER_SIZE:
-            vals = [data_buffers[i][x] for i in range(N_CHANNELS)]
-            tooltip_text = '\n'.join([f'Mirnov {i}: {vals[i]:.3f}' for i in range(N_CHANNELS)])
-            QToolTip.showText(QCursor.pos(), tooltip_text)
-        evt.accept()
-    else:
-        super(type(mirnov_plot.vb), mirnov_plot.vb).mousePressEvent(evt)
-
-mirnov_plot.vb.mousePressEvent = mousePressEvent
 
 # Create a UDP socket
 # Notice the use of SOCK_DGRAM for UDP packets
