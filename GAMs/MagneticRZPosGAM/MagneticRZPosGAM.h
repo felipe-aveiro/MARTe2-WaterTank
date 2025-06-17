@@ -34,6 +34,7 @@
 
 #include "GAM.h"
 #include "MessageI.h"
+#include <cmath>
 
 /*---------------------------------------------------------------------------*/
 /*                           Class declaration                               */
@@ -106,24 +107,6 @@ namespace MARTe {
              * @return true.
              */
             virtual bool Execute();
-            
-            /**
-             * @brief Reset the states if required.
-             * @details This functions has two operations modes:
-             * <ul>
-             * <li> Reset the GAM states every time the state changes.      |}-> update information
-             * </li>
-             * <li> Reset the GAM if it was not executed in the previous state. e.i. if the GAM goes from       |
-             * "A" to "B" and then from "B" to "C" it will not be reset. In the other hand if the GAM goes      |}-> update information
-             * from "A" to "B" and then from "C" to "D" the GAM will reset the states.                          |
-             * </li>
-             * </ul>
-             * @param[in] currentStateName indicates the current state.     |
-             * @param[in] nextStateName indicates the next state.           |}-> update information
-             * @return true if the state vectors are not NULL.              |
-             */
-             virtual bool PrepareNextState(const char8 * const currentStateName,
-                    const char8 * const nextStateName);
 
 
             /**
@@ -174,7 +157,7 @@ namespace MARTe {
              * The Sdas trigger signal
              */
 
-            MARTe::uint32 *triggerSdas;
+            // MARTe::uint32 *triggerSdas;
 
             uint32 numberOfInputElements;
             
@@ -189,19 +172,6 @@ namespace MARTe {
             MARTe::float32 *outputMpIp;
             MARTe::float32 *outputMpR;
             MARTe::float32 *outputMpZ;
-
-            /**
-             * Indicates the behaviour of the reset when MARTe changes the state
-             */
-            
-            /*
-            bool resetInEachState;
-            */
-
-            /**
-             * Flag to detect SDAS Trigger Edge.
-             */
-            uint32 lastTriggerSdas;
 
     };
 }

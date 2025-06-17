@@ -43,7 +43,7 @@ namespace MARTe {
 /**
  * The number of signals and definition of PI
  */
-    const  uint32 EP_NUM_INPUTS  = 13u;
+    const  uint32 EP_NUM_INPUTS  = 12u;
     const  uint32 EP_NUM_OUTPUTS = 3u;
     const float32 PI = 3.1415927;
 
@@ -84,7 +84,7 @@ namespace MARTe {
         inputMirnov11 = NULL_PTR(MARTe::float32 *);
         //--------------------------------------
         
-        triggerSdas = NULL_PTR(MARTe::uint32 *); // necessary?
+        // triggerSdas = NULL_PTR(MARTe::uint32 *); // necessary?
 
         /*
         inputSignal = NULL; // NULL_PTR(MARTe::float32*); // necessary?
@@ -100,12 +100,6 @@ namespace MARTe {
         outputSignals = NULL_PTR(MARTe::float32 **);
         */
        
-        /*
-        resetInEachState = false; // necessary?
-       */
-
-
-        lastTriggerSdas = 0u; // necessary?
     }
 
     MagneticRZPosGAM::~MagneticRZPosGAM() {                         // |
@@ -126,7 +120,6 @@ namespace MARTe {
         inputMirnov9  = NULL_PTR(MARTe::float32 *);
         inputMirnov10  = NULL_PTR(MARTe::float32 *);
         inputMirnov11 = NULL_PTR(MARTe::float32 *);
-        triggerSdas = NULL_PTR(MARTe::uint32 *);
 
         outputMpIp = NULL_PTR(MARTe::float32 *);
         outputMpR = NULL_PTR(MARTe::float32 *);
@@ -140,42 +133,6 @@ namespace MARTe {
         if (!ok) {
             REPORT_ERROR(ErrorManagement::ParametersError, "Could not Initialise the GAM");
         }
-
-        /*
-        if (ok) {
-            ok = data.Read("Gain", gain);           // necessary?
-            if (!ok) {
-                REPORT_ERROR(ErrorManagement::ParametersError, "The parameter Gain shall be set"); // Define Gain parameter
-            }
-        }
-        
-        if (ok) {
-            REPORT_ERROR(ErrorManagement::Information, "Parameter Gain set to %d", gain);
-        }
-        */
-
-        /*
-        if (ok) {
-            uint32 auxResetInEachState = 0u;
-            ok = data.Read("ResetInEachState", auxResetInEachState);    // necessary?
-            if (!ok) {
-                REPORT_ERROR(ErrorManagement::InitialisationError, "Error reading ResetInEachState");
-            }
-            else {
-                if (auxResetInEachState == 1u) {
-                    resetInEachState = true;
-                }
-                else if (auxResetInEachState == 0u) {
-                    resetInEachState = false;
-                }
-                else {
-                    ok = false;
-                    REPORT_ERROR(ErrorManagement::InitialisationError, "Wrong value for ResetInEachState. Possible values 0 (false) or 1 (true)");
-                }
-            }
-        }
-        */
-
         return ok;
     }
 
@@ -185,9 +142,9 @@ namespace MARTe {
         /* *************************************************** */
         //-------------------InputSignals-----------------------
         uint32 numberOfInputSignals = GetNumberOfInputSignals();
-        bool ok = (numberOfInputSignals == 13u);
+        bool ok = (numberOfInputSignals == 12u);
         if (!ok) {
-            REPORT_ERROR(ErrorManagement::ParametersError, "The number of input signals shall be equal to 13. numberOfInputSignals = %d ", numberOfInputSignals);
+            REPORT_ERROR(ErrorManagement::ParametersError, "The number of input signals shall be equal to 12. numberOfInputSignals = %d ", numberOfInputSignals);
         }
         if (ok) {
             StreamString inputSignalName;
@@ -305,10 +262,11 @@ namespace MARTe {
             inputMirnov9  = reinterpret_cast<float32 *>(GetInputSignalMemory(9u));
             inputMirnov10  = reinterpret_cast<float32 *>(GetInputSignalMemory(10u));
             inputMirnov11 = reinterpret_cast<float32 *>(GetInputSignalMemory(11u));
+            
 
-            triggerSdas = reinterpret_cast<uint32 *>(GetInputSignalMemory(12u)); // necessary?
+            // triggerSdas = reinterpret_cast<uint32 *>(GetInputSignalMemory(12u)); // necessary?
 
-            REPORT_ERROR(ErrorManagement::Information, "InputSignals reinterpret_cast OK");
+            REPORT_ERROR(ErrorManagement::Information, "InputSignals reinterpret_cast OK!");
         }
 
         /* *************************************************** */
@@ -370,53 +328,76 @@ namespace MARTe {
                     outputMpIp = reinterpret_cast<float32 *>(GetOutputSignalMemory(0u));
                     outputMpR = reinterpret_cast<float32 *>(GetOutputSignalMemory(1u));
                     outputMpZ = reinterpret_cast<float32 *>(GetOutputSignalMemory(2u));
+
+                    REPORT_ERROR(ErrorManagement::Information, "OutputSignals reinterpret_cast OK!");
                 }
             }
-            
-            /*
-            // Install message filter
-            ReferenceT<RegisteredMethodsMessageFilter> registeredMethodsMessageFilter("RegisteredMethodsMessageFilter"); // necessary?
 
-            if (ok) {
-                ok = registeredMethodsMessageFilter.IsValid(); // necessary?
+            if (ok){
+                    ok = (inputMirnov0 != NULL_PTR(float32 *)) &&
+                    (inputMirnov1 != NULL_PTR(float32 *)) &&
+                    (inputMirnov2 != NULL_PTR(float32 *)) &&
+                    (inputMirnov3 != NULL_PTR(float32 *)) &&
+                    (inputMirnov4 != NULL_PTR(float32 *)) &&
+                    (inputMirnov5 != NULL_PTR(float32 *)) &&
+                    (inputMirnov6 != NULL_PTR(float32 *)) &&
+                    (inputMirnov7 != NULL_PTR(float32 *)) &&
+                    (inputMirnov8 != NULL_PTR(float32 *)) &&
+                    (inputMirnov9 != NULL_PTR(float32 *)) &&
+                    (inputMirnov10 != NULL_PTR(float32 *)) &&
+                    (inputMirnov11 != NULL_PTR(float32 *)) &&
+                    (outputMpIp != NULL_PTR(float32 *)) &&
+                    (outputMpR != NULL_PTR(float32 *)) &&
+                    (outputMpZ != NULL_PTR(float32 *));
             }
-
-            if (ok) {
-                registeredMethodsMessageFilter->SetDestination(this); // necessary?
-                ok = InstallMessageFilter(registeredMethodsMessageFilter); // necessary?
+            if (!ok)
+            {
+                REPORT_ERROR(ErrorManagement::FatalError, "One or more signal memory pointers are NULL.");
+                ok = false;
             }
             
-            */
-
             return ok;
 
         }
-        return true;
+        return ok;
     }
     bool MagneticRZPosGAM::Execute() {
 
-        /*
-        for (MARTe::uint32 i = 0u; i <= numberOfInputElements - 1; i++){ // Sums all Mirnov coils measurements
-            *outputMpIp += inputMirnov[i];
-        }
-        */
-        *outputMpIp = *inputMirnov0;
-        *outputMpIp += *inputMirnov1;
-        *outputMpIp += *inputMirnov2;
-        *outputMpIp += *inputMirnov3;
-        *outputMpIp += *inputMirnov4;
-        *outputMpIp += *inputMirnov5;
-        *outputMpIp += *inputMirnov6;
-        *outputMpIp += *inputMirnov7;
-        *outputMpIp += *inputMirnov8;
-        *outputMpIp += *inputMirnov9;
-        *outputMpIp += *inputMirnov10;
-        *outputMpIp += *inputMirnov11;
+        float32 sumMirnov = 0.0f;
 
-        *outputMpIp *= ((2.0 * PI* 0.093)/12.0) * (1.0/4.0*PI*1.0E-7);  // TO DO: confirm Mirnov probe radius (9.3cm according to Valcárcel, 2006 - Fast Feedback Control for Plasma Positioning With a PCI Hybrid DSP/FPGA Board);
+        MARTe::float32* inputMirnovArray[12] = {
+            inputMirnov0, inputMirnov1, inputMirnov2, inputMirnov3,
+            inputMirnov4, inputMirnov5, inputMirnov6, inputMirnov7,
+            inputMirnov8, inputMirnov9, inputMirnov10, inputMirnov11
+        };
+
+        for (MARTe::uint32 i = 0u; i <= numberOfInputElements; i++){ // Sums all Mirnov coils measurements
+            sumMirnov += *inputMirnovArray[i];
+        }
+
+        *outputMpIp = sumMirnov;
+
+        const float32 mirnovRadius = 0.093f; // [m]
+        const float32 mu0 = 4.0f * PI * 1.0e-7f; // Permeability of vacuum [H/m]
+
+        // Single Current Filament Plasma Model
+        *outputMpIp *= ((2.0f * PI * mirnovRadius) / 12.0f) * (1.0f / mu0);  // TO DO: confirm Mirnov probe radius (9.3cm according to Valcárcel, 2006 - Fast Feedback Control for Plasma Positioning With a PCI Hybrid DSP/FPGA Board);
                                                                      // confirm mu0 value (4.0*PI*1E-7 H/m)
-        *outputMpR = 0;
-        *outputMpZ = 0;
+
+        // Additional safety check for extremely small Ip
+        const float32 ipThreshold = 500.0f; // minIp = 500.0 A
+        if (fabsf(*outputMpIp) < ipThreshold) {
+            REPORT_ERROR(ErrorManagement::Warning, "Plasma current is under threshold; magnetic reconstruction is inoperative: outputMpIp = %f", *outputMpIp);
+            // Use Rogowski coil values for Ip (?)
+            *outputMpR = 0.0f;
+            *outputMpZ = 0.0f;
+        }
+        else {
+            // Placeholder for R and Z calculations (to be implemented)
+            *outputMpR = 0.0f;
+            *outputMpZ = 0.0f;
+    }
+
 
         /*
         R_0 = 0.46 m - major radius
@@ -480,63 +461,8 @@ namespace MARTe {
         /*
         *outputMpZ =  inputSignal[0] - inputSignal[3];
         */
-
-        /* Should use a MARTe2 Message. 
-         * Here for Sdas recorded signal with Trigger pseudo-signal
-         * */
-        if ((lastTriggerSdas == 0u) && (*triggerSdas == 1u)) {  // necessary?
-            // CalcOffSets();
-            return true;
-        }
-        lastTriggerSdas = *triggerSdas;
+    
         return true;
-    }
-
-    bool MagneticRZPosGAM::PrepareNextState(const char8 * const currentStateName,
-            const char8 * const nextStateName) {
-        bool ret = true;
-        
-        /*
-        if (resetInEachState) {
-            lastStateExecuted = nextStateName;
-        }
-        */
-
-/*
-            bool cond1 = (stateVector.GetDataPointer() != NULL_PTR(float64 **));
-            bool cond2 = (derivativeStateVector.GetDataPointer() != NULL_PTR(float64 **));
-            if (cond1 && cond2) {
-                for (uint32 i = 0u; i < sizeStateVector; i++) {
-                    stateVector(i, 0u) = 0.0;
-                    derivativeStateVector(i, 0u) = 0.0;
-                }
-            }
-            else {
-                REPORT_ERROR(ErrorManagement::ParametersError, "stateVector or derivativeStateVector = NULL ");
-                ret = false;
-            }
-
-        }
-        else {
-            //If the currentStateName and lastStateExecuted are different-> rest values
-            if (lastStateExecuted != currentStateName) {
-                bool cond1 = (stateVector.GetDataPointer() != NULL_PTR(float64 **));
-                bool cond2 = (derivativeStateVector.GetDataPointer() != NULL_PTR(float64 **));
-                if (cond1 && cond2) {
-                    for (uint32 i = 0u; i < sizeStateVector; i++) {
-                        stateVector(i, 0u) = 0.0;
-                        derivativeStateVector(i, 0u) = 0.0;
-                    }
-                }
-                else {
-                    REPORT_ERROR(ErrorManagement::ParametersError, "stateVector or derivativeStateVector = NULL ");
-                    ret = false;
-                }
-            }
-            lastStateExecuted = nextStateName;
-        }
-*/
-        return ret;
     }
 
 
@@ -546,46 +472,11 @@ namespace MARTe {
         if (ok) {
             ok = data.CreateRelative("Parameters");
         }
-        /*
-        if (ok) {
-            ok = data.Write("Gain", gain);
-        }
-        */
         if (ok) {
             ok = data.MoveToAncestor(1u);
         }
         return ok;
     }
-
-    /*
-    ErrorManagement::ErrorType MagneticRZPosGAM::CalcOffSets() {            // |
-                                                                            // |
-        ErrorManagement::ErrorType ret = MARTe::ErrorManagement::NoError;   // |
-        REPORT_ERROR(ErrorManagement::Information,                          // |
-                        "CalcOffSets. Inputs:%f, %f, %f, %f.",              // |
-                        inputSignal[0],                                     // |
-                        inputSignal[1],                                     // |
-                        inputSignal[2],                                     // |
-                        inputSignal[3]);                                    // |
-        if (numberOfSamplesAvg > 1u) {                                      // |
-            for (uint32 i = 0u; i < EP_NUM_INPUTS; i++) {                   // |
-                inputOffset[i] = 0.0f;                                      // |
-                for (uint32 k =  0 ; k < numberOfSamplesAvg; k++) {         // |}-> necessary?
-                    inputOffset[i] += lastInputs[i][k];                     // |
-                }                                                           // |
-                inputOffset[i] /= numberOfSamplesAvg;                       // |
-            }                                                               // |
-            REPORT_ERROR(ErrorManagement::Information,                      // |
-                        "CalcOffSets. Offset:%f, %f, %f, %f.",              // |
-                        inputOffset[0],                                     // |
-                        inputOffset[1],                                     // |
-                        inputOffset[2],                                     // |
-                        inputOffset[3]);                                    // |
-        }                                                                   // |
-
-        return ret;
-    }
-    */
 
     CLASS_REGISTER(MagneticRZPosGAM, "0.1")
 
