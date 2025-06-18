@@ -45,87 +45,77 @@ namespace MARTe {
  */
     const  uint32 EP_NUM_INPUTS  = 12u;
     const  uint32 EP_NUM_OUTPUTS = 3u;
-    const float32 PI = 3.1415927;
+    const float64 PI = 3.141592653589793;
 
 /*---------------------------------------------------------------------------*/
 /*                           Method definitions                              */
 /*---------------------------------------------------------------------------*/
-//namespace MARTeIsttok {
-    /*
-    MagneticRZPosGAM::MagneticRZPosGAM() : 
-                GAM(),
-                MessageI() // Should the method be registered as a messageable function?
-                {
-    */
+
     MagneticRZPosGAM::MagneticRZPosGAM() : 
                 GAM() {
-        /*
-        gain = 0u; // necessary?
-        numberOfSamplesAvg = 1u; // necessary?
-        */
-        numberOfInputElements = 0u; // necessary?
+    
+        numberOfInputElements = 0u;
         
 
         //--------------Inputs----------------
         //for (k=0u; k<EP_NUM_INPUTS-1; k++) {
-        //    inputMirnov[k] = NULL_PTR(MARTe::float32 *);
+        //    inputMirnov[k] = NULL_PTR(MARTe::float64 *);
         //}
-        inputMirnov0    = NULL_PTR(MARTe::float32 *);
-        inputMirnov1  = NULL_PTR(MARTe::float32 *);
-        inputMirnov2  = NULL_PTR(MARTe::float32 *);
-        inputMirnov3 = NULL_PTR(MARTe::float32 *);
-        inputMirnov4    = NULL_PTR(MARTe::float32 *);
-        inputMirnov5  = NULL_PTR(MARTe::float32 *);
-        inputMirnov6  = NULL_PTR(MARTe::float32 *);
-        inputMirnov7 = NULL_PTR(MARTe::float32 *);
-        inputMirnov8    = NULL_PTR(MARTe::float32 *);
-        inputMirnov9  = NULL_PTR(MARTe::float32 *);
-        inputMirnov10  = NULL_PTR(MARTe::float32 *);
-        inputMirnov11 = NULL_PTR(MARTe::float32 *);
+        inputMirnov0    = NULL_PTR(MARTe::float64 *);
+        inputMirnov1  = NULL_PTR(MARTe::float64 *);
+        inputMirnov2  = NULL_PTR(MARTe::float64 *);
+        inputMirnov3 = NULL_PTR(MARTe::float64 *);
+        inputMirnov4    = NULL_PTR(MARTe::float64 *);
+        inputMirnov5  = NULL_PTR(MARTe::float64 *);
+        inputMirnov6  = NULL_PTR(MARTe::float64 *);
+        inputMirnov7 = NULL_PTR(MARTe::float64 *);
+        inputMirnov8    = NULL_PTR(MARTe::float64 *);
+        inputMirnov9  = NULL_PTR(MARTe::float64 *);
+        inputMirnov10  = NULL_PTR(MARTe::float64 *);
+        inputMirnov11 = NULL_PTR(MARTe::float64 *);
         //--------------------------------------
         
         // triggerSdas = NULL_PTR(MARTe::uint32 *); // necessary?
 
-        /*
-        inputSignal = NULL; // NULL_PTR(MARTe::float32*); // necessary?
-        */
 
         //--------------Outputs----------------
-        outputMpIp = NULL_PTR(MARTe::float32 *);
-        outputMpR = NULL_PTR(MARTe::float32 *);
-        outputMpZ = NULL_PTR(MARTe::float32 *);
+        outputMpIp = NULL_PTR(MARTe::float64 *);
+        outputMpR = NULL_PTR(MARTe::float64 *);
+        outputMpZ = NULL_PTR(MARTe::float64 *);
         //--------------------------------------
         
         /*
-        outputSignals = NULL_PTR(MARTe::float32 **);
+        outputSignals = NULL_PTR(MARTe::float64 **);
         */
        
     }
-
+    
     MagneticRZPosGAM::~MagneticRZPosGAM() {                         // |
         
-        /* -------- Signal Declaration --------------------------------
-        inputSignal =  NULL; //NULL_PTR(MARTe::float32*);           // | } -> necessary?
+        /*
+         -------- Signal Declaration --------------------------------
+        inputSignal =  NULL; //NULL_PTR(MARTe::float64*);           // | } -> necessary?
         */
 
-        inputMirnov0    = NULL_PTR(MARTe::float32 *);
-        inputMirnov1  = NULL_PTR(MARTe::float32 *);
-        inputMirnov2  = NULL_PTR(MARTe::float32 *);
-        inputMirnov3 = NULL_PTR(MARTe::float32 *);
-        inputMirnov4    = NULL_PTR(MARTe::float32 *);
-        inputMirnov5  = NULL_PTR(MARTe::float32 *);
-        inputMirnov6  = NULL_PTR(MARTe::float32 *);
-        inputMirnov7 = NULL_PTR(MARTe::float32 *);
-        inputMirnov8    = NULL_PTR(MARTe::float32 *);
-        inputMirnov9  = NULL_PTR(MARTe::float32 *);
-        inputMirnov10  = NULL_PTR(MARTe::float32 *);
-        inputMirnov11 = NULL_PTR(MARTe::float32 *);
+        inputMirnov0    = NULL_PTR(MARTe::float64 *);
+        inputMirnov1  = NULL_PTR(MARTe::float64 *);
+        inputMirnov2  = NULL_PTR(MARTe::float64 *);
+        inputMirnov3 = NULL_PTR(MARTe::float64 *);
+        inputMirnov4    = NULL_PTR(MARTe::float64 *);
+        inputMirnov5  = NULL_PTR(MARTe::float64 *);
+        inputMirnov6  = NULL_PTR(MARTe::float64 *);
+        inputMirnov7 = NULL_PTR(MARTe::float64 *);
+        inputMirnov8    = NULL_PTR(MARTe::float64 *);
+        inputMirnov9  = NULL_PTR(MARTe::float64 *);
+        inputMirnov10  = NULL_PTR(MARTe::float64 *);
+        inputMirnov11 = NULL_PTR(MARTe::float64 *);
 
-        outputMpIp = NULL_PTR(MARTe::float32 *);
-        outputMpR = NULL_PTR(MARTe::float32 *);
-        outputMpZ = NULL_PTR(MARTe::float32 *);
+        outputMpIp = NULL_PTR(MARTe::float64 *);
+        outputMpR = NULL_PTR(MARTe::float64 *);
+        outputMpZ = NULL_PTR(MARTe::float64 *);
 
     }                                                               // |
+    
 
     bool MagneticRZPosGAM::Initialise(MARTe::StructuredDataI & data) {
         using namespace MARTe;
@@ -150,11 +140,11 @@ namespace MARTe {
             StreamString inputSignalName;
             ok = GetSignalName(InputSignals, 0u, inputSignalName);
             TypeDescriptor inputSignalType = GetSignalType(InputSignals, 0u);
-            ok = (inputSignalType == Float32Bit); 
+            ok = (inputSignalType == Float64Bit); 
             if (!ok) {
                 const char8 * const inputSignalTypeStr = TypeDescriptor::GetTypeNameFromTypeDescriptor(inputSignalType);
                 REPORT_ERROR(ErrorManagement::ParametersError,
-                        "The type of the input signals shall be float32. inputSignalType = %s", inputSignalTypeStr);
+                        "The type of the input signals shall be float64. inputSignalType = %s", inputSignalTypeStr);
             }
             uint32 numberOfInputSamples = 0u;
             if (ok) {
@@ -193,11 +183,11 @@ namespace MARTe {
             }
             ok = GetSignalName(InputSignals, 1u, inputSignalName);
             inputSignalType = GetSignalType(InputSignals, 1u);
-            ok = (inputSignalType == Float32Bit);
+            ok = (inputSignalType == Float64Bit);
             if (!ok) {
                 const char8 * const inputSignalTypeStr = TypeDescriptor::GetTypeNameFromTypeDescriptor(inputSignalType);
                 REPORT_ERROR(ErrorManagement::ParametersError,
-                        "The type of the input signals shall be float32. inputSignalType = %s", inputSignalTypeStr);
+                        "The type of the input signals shall be float64. inputSignalType = %s", inputSignalTypeStr);
             }
             numberOfInputSamples = 0u;
             if (ok) {
@@ -240,7 +230,7 @@ namespace MARTe {
 
         if (ok) {
             /*
-            inputSignal   = reinterpret_cast<float32 *>(GetInputSignalMemory(xu));
+            inputSignal   = reinterpret_cast<float64 *>(GetInputSignalMemory(xu));
             */
 
            /*---------------------------------------------------------------------------*/
@@ -248,20 +238,20 @@ namespace MARTe {
            /*---------------------------------------------------------------------------*/
             
            //for (k=0u; k<EP_NUM_INPUTS-1; k++) {
-            //    inputMirnov[k] = reinterpret_cast<float32 *>(GetInputSignalMemory(k));
+            //    inputMirnov[k] = reinterpret_cast<float64 *>(GetInputSignalMemory(k));
             //}
-            inputMirnov0    = reinterpret_cast<float32 *>(GetInputSignalMemory(0u));
-            inputMirnov1  = reinterpret_cast<float32 *>(GetInputSignalMemory(1u));
-            inputMirnov2  = reinterpret_cast<float32 *>(GetInputSignalMemory(2u));
-            inputMirnov3 = reinterpret_cast<float32 *>(GetInputSignalMemory(3u));
-            inputMirnov4    = reinterpret_cast<float32 *>(GetInputSignalMemory(4u));
-            inputMirnov5  = reinterpret_cast<float32 *>(GetInputSignalMemory(5u));
-            inputMirnov6  = reinterpret_cast<float32 *>(GetInputSignalMemory(6u));
-            inputMirnov7 = reinterpret_cast<float32 *>(GetInputSignalMemory(7u));
-            inputMirnov8    = reinterpret_cast<float32 *>(GetInputSignalMemory(8u));
-            inputMirnov9  = reinterpret_cast<float32 *>(GetInputSignalMemory(9u));
-            inputMirnov10  = reinterpret_cast<float32 *>(GetInputSignalMemory(10u));
-            inputMirnov11 = reinterpret_cast<float32 *>(GetInputSignalMemory(11u));
+            inputMirnov0    = reinterpret_cast<float64 *>(GetInputSignalMemory(0u));
+            inputMirnov1  = reinterpret_cast<float64 *>(GetInputSignalMemory(1u));
+            inputMirnov2  = reinterpret_cast<float64 *>(GetInputSignalMemory(2u));
+            inputMirnov3 = reinterpret_cast<float64 *>(GetInputSignalMemory(3u));
+            inputMirnov4    = reinterpret_cast<float64 *>(GetInputSignalMemory(4u));
+            inputMirnov5  = reinterpret_cast<float64 *>(GetInputSignalMemory(5u));
+            inputMirnov6  = reinterpret_cast<float64 *>(GetInputSignalMemory(6u));
+            inputMirnov7 = reinterpret_cast<float64 *>(GetInputSignalMemory(7u));
+            inputMirnov8    = reinterpret_cast<float64 *>(GetInputSignalMemory(8u));
+            inputMirnov9  = reinterpret_cast<float64 *>(GetInputSignalMemory(9u));
+            inputMirnov10  = reinterpret_cast<float64 *>(GetInputSignalMemory(10u));
+            inputMirnov11 = reinterpret_cast<float64 *>(GetInputSignalMemory(11u));
             
 
             // triggerSdas = reinterpret_cast<uint32 *>(GetInputSignalMemory(12u)); // necessary?
@@ -282,11 +272,11 @@ namespace MARTe {
                 StreamString outputSignalName;
                 ok = GetSignalName(OutputSignals, n, outputSignalName);
                 TypeDescriptor outputSignalType = GetSignalType(OutputSignals, n);
-                ok = (outputSignalType == Float32Bit);
+                ok = (outputSignalType == Float64Bit);
                 if (!ok) {
                     const char8 * const outputSignalTypeStr = TypeDescriptor::GetTypeNameFromTypeDescriptor(outputSignalType);
                     REPORT_ERROR(ErrorManagement::ParametersError,
-                            "The type of the output signals shall be float32. outputSignalType = %s", outputSignalTypeStr);
+                            "The type of the output signals shall be float64. outputSignalType = %s", outputSignalTypeStr);
                 }
                 uint32 numberOfOutputSamples = 0u;
                 if (ok) {
@@ -325,30 +315,30 @@ namespace MARTe {
                 }
                 
                 if (ok) {
-                    outputMpIp = reinterpret_cast<float32 *>(GetOutputSignalMemory(0u));
-                    outputMpR = reinterpret_cast<float32 *>(GetOutputSignalMemory(1u));
-                    outputMpZ = reinterpret_cast<float32 *>(GetOutputSignalMemory(2u));
+                    outputMpIp = reinterpret_cast<float64 *>(GetOutputSignalMemory(0u));
+                    outputMpR = reinterpret_cast<float64 *>(GetOutputSignalMemory(1u));
+                    outputMpZ = reinterpret_cast<float64 *>(GetOutputSignalMemory(2u));
 
                     REPORT_ERROR(ErrorManagement::Information, "OutputSignals reinterpret_cast OK!");
                 }
             }
 
             if (ok){
-                    ok = (inputMirnov0 != NULL_PTR(float32 *)) &&
-                    (inputMirnov1 != NULL_PTR(float32 *)) &&
-                    (inputMirnov2 != NULL_PTR(float32 *)) &&
-                    (inputMirnov3 != NULL_PTR(float32 *)) &&
-                    (inputMirnov4 != NULL_PTR(float32 *)) &&
-                    (inputMirnov5 != NULL_PTR(float32 *)) &&
-                    (inputMirnov6 != NULL_PTR(float32 *)) &&
-                    (inputMirnov7 != NULL_PTR(float32 *)) &&
-                    (inputMirnov8 != NULL_PTR(float32 *)) &&
-                    (inputMirnov9 != NULL_PTR(float32 *)) &&
-                    (inputMirnov10 != NULL_PTR(float32 *)) &&
-                    (inputMirnov11 != NULL_PTR(float32 *)) &&
-                    (outputMpIp != NULL_PTR(float32 *)) &&
-                    (outputMpR != NULL_PTR(float32 *)) &&
-                    (outputMpZ != NULL_PTR(float32 *));
+                    ok = (inputMirnov0 != NULL_PTR(float64 *)) &&
+                    (inputMirnov1 != NULL_PTR(float64 *)) &&
+                    (inputMirnov2 != NULL_PTR(float64 *)) &&
+                    (inputMirnov3 != NULL_PTR(float64 *)) &&
+                    (inputMirnov4 != NULL_PTR(float64 *)) &&
+                    (inputMirnov5 != NULL_PTR(float64 *)) &&
+                    (inputMirnov6 != NULL_PTR(float64 *)) &&
+                    (inputMirnov7 != NULL_PTR(float64 *)) &&
+                    (inputMirnov8 != NULL_PTR(float64 *)) &&
+                    (inputMirnov9 != NULL_PTR(float64 *)) &&
+                    (inputMirnov10 != NULL_PTR(float64 *)) &&
+                    (inputMirnov11 != NULL_PTR(float64 *)) &&
+                    (outputMpIp != NULL_PTR(float64 *)) &&
+                    (outputMpR != NULL_PTR(float64 *)) &&
+                    (outputMpZ != NULL_PTR(float64 *));
             }
             if (!ok)
             {
@@ -363,9 +353,9 @@ namespace MARTe {
     }
     bool MagneticRZPosGAM::Execute() {
 
-        float32 sumMirnov = 0.0f;
+        float64 sumMirnov = 0.0f;
 
-        MARTe::float32* inputMirnovArray[12] = {
+        MARTe::float64* inputMirnovArray[12] = {
             inputMirnov0, inputMirnov1, inputMirnov2, inputMirnov3,
             inputMirnov4, inputMirnov5, inputMirnov6, inputMirnov7,
             inputMirnov8, inputMirnov9, inputMirnov10, inputMirnov11
@@ -377,15 +367,15 @@ namespace MARTe {
 
         *outputMpIp = sumMirnov;
 
-        const float32 mirnovRadius = 0.093f; // [m]
-        const float32 mu0 = 4.0f * PI * 1.0e-7f; // Permeability of vacuum [H/m]
+        const float64 mirnovRadius = 0.093f; // [m]
+        const float64 mu0 = 4.0f * PI * 1.0e-7f; // Permeability of vacuum [H/m]
 
         // Single Current Filament Plasma Model
         *outputMpIp *= ((2.0f * PI * mirnovRadius) / 12.0f) * (1.0f / mu0);  // TO DO: confirm Mirnov probe radius (9.3cm according to Valcárcel, 2006 - Fast Feedback Control for Plasma Positioning With a PCI Hybrid DSP/FPGA Board);
                                                                      // confirm mu0 value (4.0*PI*1E-7 H/m)
 
         // Additional safety check for extremely small Ip
-        const float32 ipThreshold = 500.0f; // minIp = 500.0 A
+        const float64 ipThreshold = 500.0f; // minIp = 500.0 A
         if (fabsf(*outputMpIp) < ipThreshold) {
             REPORT_ERROR(ErrorManagement::Warning, "Plasma current is under threshold; magnetic reconstruction is inoperative: outputMpIp = %f", *outputMpIp);
             // Use Rogowski coil values for Ip (?)

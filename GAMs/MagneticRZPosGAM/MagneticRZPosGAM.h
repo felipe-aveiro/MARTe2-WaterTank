@@ -98,7 +98,7 @@ namespace MARTe {
              * @pre
              *   SetConfiguredDatabase() &&
              *   GetNumberOfInputSignals() == 13 
-             *   GetSignalType(InputSignals, 0) == GetSignalType(OutputSignals, 0) == float32 &&
+             *   GetSignalType(InputSignals, 0) == GetSignalType(OutputSignals, 0) == float64 &&
              */
             virtual bool Setup();
 
@@ -138,20 +138,20 @@ namespace MARTe {
              * The input Magnetic Probes (Mirnov Coils) signals
             */
             /*
-            MARTe::float32 *inputMirnov[12];
+            MARTe::float64 *inputMirnov[12];
             */
-            MARTe::float32 *inputMirnov0;
-            MARTe::float32 *inputMirnov1;
-            MARTe::float32 *inputMirnov2;
-            MARTe::float32 *inputMirnov3;
-            MARTe::float32 *inputMirnov4;
-            MARTe::float32 *inputMirnov5;
-            MARTe::float32 *inputMirnov6;
-            MARTe::float32 *inputMirnov7;
-            MARTe::float32 *inputMirnov8;
-            MARTe::float32 *inputMirnov9;
-            MARTe::float32 *inputMirnov10;
-            MARTe::float32 *inputMirnov11;
+            MARTe::float64 *inputMirnov0;
+            MARTe::float64 *inputMirnov1;
+            MARTe::float64 *inputMirnov2;
+            MARTe::float64 *inputMirnov3;
+            MARTe::float64 *inputMirnov4;
+            MARTe::float64 *inputMirnov5;
+            MARTe::float64 *inputMirnov6;
+            MARTe::float64 *inputMirnov7;
+            MARTe::float64 *inputMirnov8;
+            MARTe::float64 *inputMirnov9;
+            MARTe::float64 *inputMirnov10;
+            MARTe::float64 *inputMirnov11;
 
             /**
              * The Sdas trigger signal
@@ -162,16 +162,16 @@ namespace MARTe {
             uint32 numberOfInputElements;
             
             /*
-            float32 inputOffset[4];
-            MARTe::float32 **lastInputs;
+            float64 inputOffset[4];
+            MARTe::float64 **lastInputs;
             */
 
             /**
              * The output signals
              */
-            MARTe::float32 *outputMpIp;
-            MARTe::float32 *outputMpR;
-            MARTe::float32 *outputMpZ;
+            MARTe::float64 *outputMpIp;
+            MARTe::float64 *outputMpR;
+            MARTe::float64 *outputMpZ;
 
     };
 }
