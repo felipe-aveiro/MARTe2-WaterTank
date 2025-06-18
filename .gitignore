@@ -40,3 +40,4 @@ depends*.*
 Trees
 Startup/OutputGraphs/MARTe2-Engine/output_graph.png
 Startup/WaterTankOutputs.csv
+MdsVisualization/__pycache__/ClientMdsThin.cpython-39.pyc
