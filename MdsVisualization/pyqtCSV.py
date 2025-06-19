@@ -54,7 +54,7 @@ except Exception as e:
 
 # === Identify columns ===
 time_col = "#Time (uint32)[1]" # = df.columns[0]
-mirnov_cols = [f"correctedMirnov{i} (float64)[1]" for i in range(12)] # = df.columns[i + 1] for i in range(12)
+mirnov_cols = [f"inputMirnov{i} (float64)[1]" for i in range(12)] # = df.columns[i + 1] for i in range(12)
 mpip_col = "outputMpIp (float64)[1]" # = df.columns[13]
 time = df[time_col].values
 time_min, time_max = time.min(), time.max()
@@ -82,7 +82,7 @@ plot_widget = pg.GraphicsLayoutWidget()
 main_layout.addWidget(plot_widget, stretch=1)
 
 # === Plot 1: Mirnov ===
-plot1 = plot_widget.addPlot(title="correctedMirnov vs Time")
+plot1 = plot_widget.addPlot(title="inputMirnov vs Time")
 plot1.setLabel('bottom', 'Time [\u00b5s]')
 plot1.setLabel('left', 'Magnetic Field [T]')
 plot1.addLegend()
