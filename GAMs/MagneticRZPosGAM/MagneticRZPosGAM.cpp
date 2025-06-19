@@ -375,7 +375,7 @@ namespace MARTe {
                                                                      // confirm mu0 value (4.0*PI*1E-7 H/m)
 
         // Additional safety check for extremely small Ip
-        const float64 ipThreshold = 500.0f; // minIp = 500.0 A
+        const float64 ipThreshold = 500.0f; // minIp = 500.0 A according to 'ISTTOK plasma control with the tomography diagnostic' 
         if (fabsf(*outputMpIp) < ipThreshold) {
             REPORT_ERROR(ErrorManagement::Warning, "Plasma current is under threshold; magnetic reconstruction is inoperative: outputMpIp = %f", *outputMpIp);
             // Use Rogowski coil values for Ip (?)
