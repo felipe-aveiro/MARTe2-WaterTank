@@ -72,7 +72,7 @@ main_window.setCentralWidget(central_widget)
 # === Export buttons ===
 button_layout = QtWidgets.QHBoxLayout()
 export1_btn = QtWidgets.QPushButton("Export Mirnov Plot")
-export2_btn = QtWidgets.QPushButton("Export MpIp Plot")
+export2_btn = QtWidgets.QPushButton("Export Plasma Current Plot")
 button_layout.addWidget(export1_btn)
 button_layout.addWidget(export2_btn)
 main_layout.addLayout(button_layout)
