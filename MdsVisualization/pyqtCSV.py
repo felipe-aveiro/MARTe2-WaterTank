@@ -111,17 +111,18 @@ except Exception as e:
     sys.exit()
 
 # === Identify columns ===
-time_col = "#timeI (float64)[1]" # = df.columns[0]
-mirnov_cols = [f"inputMirnov{i} (float64)[1]" for i in range(12)] # = df.columns[i + 1] for i in range(12)
-mpip_col = "outputMpIp (float64)[1]" # = df.columns[13]
-mpr_col = "outputMpR (float64)[1]" # = df.columns[14]
-mpz_col = "outputMpZ (float64)[1]" # = df.columns[15]
-chopper_col = "chopper_trigger (float64)[1]" # = df.columns[16]
+time_col = "#timeI (float64)[1]"
+mirnov_cols = [f"inputMirnov{i} (float64)[1]" for i in range(12)]
+mpip_col = "outputMpIp (float64)[1]"
+mpr_col = "outputMpR (float64)[1]"
+mpz_col = "outputMpZ (float64)[1]"
+chopper_col = "chopper_trigger (float64)[1]"
+rogowski_cols = "mds_ch12 (float64)[1]"
 
 full_time = (df[time_col] - df[time_col].iloc[0]) * 1e3
 full_time_min, full_time_max = full_time.min(), full_time.max()
-chopper_time = full_time.values
 start_index = df[df[chopper_col] == 3].index.min()
+chopper_time = full_time.values - full_time.values[start_index] if pd.notna(start_index) else full_time.values
 
 if pd.notna(start_index):
     df_filtered = df.loc[start_index:].reset_index(drop=True)
@@ -146,14 +147,16 @@ export1_btn = QtWidgets.QPushButton("Export Mirnov Plot")
 export2_btn = QtWidgets.QPushButton("Export Plasma Current Plot")
 export3_btn = QtWidgets.QPushButton("Export Radial Position Plot")
 export4_btn = QtWidgets.QPushButton("Export Vertical Position Plot")
+export5_btn = QtWidgets.QPushButton("Export Comparison Plot")
 
-for btn in (export3_btn, export4_btn):
+for btn in (export3_btn, export4_btn, export5_btn):
     btn.hide()
 
 button_layout.addWidget(export1_btn)
 button_layout.addWidget(export2_btn)
 button_layout.addWidget(export3_btn)
 button_layout.addWidget(export4_btn)
+button_layout.addWidget(export5_btn)
 main_layout.addLayout(button_layout)
 
 plot_widget = pg.GraphicsLayoutWidget()
@@ -163,10 +166,11 @@ def show_main_plots():
     plot_widget.clear()
     global plot1, plot2, plot3
 
-    export1_btn.show()
-    export2_btn.show()
     export3_btn.hide()
     export4_btn.hide()
+    export5_btn.hide()
+    export1_btn.show()
+    export2_btn.show()
 
     plot1 = plot_widget.addPlot(title="inputMirnov vs Time")
     plot1.setLabel('bottom', 'Time [ms]')
@@ -188,7 +192,8 @@ def show_main_plots():
 
     for col, color in zip(mirnov_cols, colors):
         y = df_filtered[col].values
-        plot1.plot(time, y, pen=pg.mkPen(color=color, width=1), name=col)
+        clean_name = col.split(" ")[0]  # remove everything after first space
+        plot1.plot(time, y, pen=pg.mkPen(color=color, width=1), name=clean_name)
 
     plot_widget.nextRow()
     plot2 = plot_widget.addPlot(title="outputMpIp vs Time")
@@ -206,45 +211,68 @@ def show_main_plots():
     plot3 = plot_widget.addPlot()
     plot3.setLabel('bottom', 'Time [ms]')
     plot3.setLabel('left', 'Trigger')
-    plot3.setXRange(full_time_min, full_time_max, padding=0)
-    plot3.setLimits(xMin=full_time_min, xMax=full_time_max)
+    plot3.setXRange(chopper_time.min(), chopper_time.max(), padding=0)
+    plot3.setLimits(xMin=chopper_time.min(), xMax=chopper_time.max())
     plot3.setYRange(0, 3)
     plot3.setLimits(yMin=0, yMax=3)
     plot3.setAutoVisible(y=False)
     plot3.plot(chopper_time, df[chopper_col].values, pen=pg.mkPen('w', width=1))
     plot3.getViewBox().setMinimumHeight(60)
     plot3.setMaximumHeight(100)
-
-def toggle_buttons(show_right):
-    right_arrow.setVisible(show_right)
-    left_arrow.setVisible(not show_right)
+    toggle_buttons(show_right1=True, show_left1=False, show_left2=False)
 
 def show_mprz_plots():
     plot_widget.clear()
+    
     export1_btn.hide()
     export2_btn.hide()
+    export5_btn.hide()
     export3_btn.show()
     export4_btn.show()
 
     plot4 = plot_widget.addPlot(title="outputMpR vs Time")
     plot4.setLabel('bottom', 'Time [ms]')
     plot4.setLabel('left', 'Radial Position [m]')
+    plot4.setXRange(time_min, time_max, padding=0)
+    plot4.setLimits(xMin=time_min, xMax=time_max)
     plot4.plot(time, df_filtered[mpr_col].values, pen='c')
     setup_clickable_plot(plot4, "R", "m")
-
 
     plot_widget.nextRow()
     plot5 = plot_widget.addPlot(title="outputMpZ vs Time")
     plot5.setLabel('bottom', 'Time [ms]')
     plot5.setLabel('left', 'Vertical Position [m]')
+    plot5.setXRange(time_min, time_max, padding=0)
+    plot5.setLimits(xMin=time_min, xMax=time_max)
     plot5.plot(time, df_filtered[mpz_col].values, pen='m')
     setup_clickable_plot(plot5, "z", "m")
+    toggle_buttons(show_right1=False, show_right2=True, show_left1=True, show_left2=False)
 
-    toggle_buttons(False)
+def show_rogowski_comparison_plot():
+    plot_widget.clear()
+    export1_btn.hide()
+    export2_btn.hide()
+    export3_btn.hide()
+    export4_btn.hide()
+    export5_btn.show()
+
+    plot_rogowski = plot_widget.addPlot(title="Rogowski measurements vs Magnetic reconstruction")
+    plot_rogowski.setLabel('bottom', 'Time [ms]')
+    plot_rogowski.setLabel('left', 'A')
+    plot_rogowski.addLegend()
+    plot_rogowski.setXRange(time_min, time_max, padding=0)
+    plot_rogowski.setLimits(xMin=time_min, xMax=time_max)
+    plot_rogowski.plot(time, df_filtered[rogowski_cols].values, pen='m', name="Rogowski measurement")
+    plot_rogowski.plot(time, df_filtered[mpip_col].values, pen='r', name="Magnetic reconstruction") # df_filtered[mpip_col].values * 1e-3 * -1 to guarantee that both signals are essentially in the same range and polarity
+    plot_rogowski.setAutoVisible(y=True)
+    zero_line = pg.InfiniteLine(pos=0, angle=0, pen=pg.mkPen('w', width=1, style=QtCore.Qt.DashLine))
+    plot_rogowski.addItem(zero_line)
+    setup_clickable_plot(plot_rogowski, "Iₚ", "A")
+    toggle_buttons(show_right1=False, show_right2=False, show_left1=False, show_left2=True)
 
 def return_to_main_plots():
     show_main_plots()
-    toggle_buttons(True)
+    toggle_buttons(show_right=True, show_left=False)
 
 def export_plot_with_dialog(plot, suggested_name):
     options = QtWidgets.QFileDialog.Options()
@@ -258,6 +286,12 @@ def export_plot_with_dialog(plot, suggested_name):
     if file_path:
         exporter = pg.exporters.ImageExporter(plot)
         exporter.export(file_path)
+
+def toggle_buttons(show_right1, show_right2=False, show_left1=False, show_left2=False):
+    right_arrow.setVisible(show_right1)
+    right_arrow2.setVisible(show_right2)
+    left_arrow.setVisible(show_left1)
+    left_arrow2.setVisible(show_left2)
 
 right_arrow = QtWidgets.QPushButton("⊳", main_window)
 right_arrow.setToolTip("Show MpR & MpZ Plots")
@@ -284,21 +318,36 @@ left_arrow.setFixedSize(40, 40)
 left_arrow.setStyleSheet(right_arrow.styleSheet())
 left_arrow.clicked.connect(return_to_main_plots)
 
-for btn in (right_arrow, left_arrow):
+right_arrow2 = QtWidgets.QPushButton("⊳", main_window)
+right_arrow2.setToolTip("Show Comparison Plot")
+right_arrow2.setFixedSize(40, 40)
+right_arrow2.setStyleSheet(right_arrow.styleSheet())
+right_arrow2.clicked.connect(show_rogowski_comparison_plot)
+
+left_arrow2 = QtWidgets.QPushButton("⊲", main_window)
+left_arrow2.setToolTip("Show MpR & MpZ Plots")
+left_arrow2.setFixedSize(40, 40)
+left_arrow2.setStyleSheet(right_arrow.styleSheet())
+left_arrow2.clicked.connect(show_mprz_plots)
+
+for btn in (right_arrow, left_arrow, right_arrow2, left_arrow2):
     btn.setParent(main_window)
     btn.setAttribute(QtCore.Qt.WA_TransparentForMouseEvents, False)
+
+def reposition_arrows():
+    h = main_window.height()
+    right_arrow.move(main_window.width() - 60, h // 2 - 48)
+    left_arrow.move(40, h // 2 + 2)
+    right_arrow2.move(main_window.width() - 60, h // 2 + 2)
+    left_arrow2.move(main_window.width() - 60, h // 2 + 20)
 
 export1_btn.clicked.connect(lambda: export_plot_with_dialog(plot1, "mirnov_plot.png"))
 export2_btn.clicked.connect(lambda: export_plot_with_dialog(plot2, "mpip_plot.png"))
 export3_btn.clicked.connect(lambda: export_plot_with_dialog(plot_widget.getItem(0, 0), "mpr_plot.png"))
 export4_btn.clicked.connect(lambda: export_plot_with_dialog(plot_widget.getItem(1, 0), "mpz_plot.png"))
+export5_btn.clicked.connect(lambda: export_plot_with_dialog(plot_widget.getItem(0, 0), "rogowksi_m-reconstruction_comparison.png"))
 
 main_window.showMaximized()
-
-def reposition_arrows():
-    h = main_window.height()
-    right_arrow.move(main_window.width() - 60, h // 2 - 48)
-    left_arrow.move(main_window.width() - 60, h // 2 + 20)
 
 main_window.resizeEvent = lambda e: reposition_arrows()
 reposition_arrows()
