@@ -31,8 +31,8 @@ def save_combined_csv(filename, timeR, raw_data, timeI, integ_data, chopper_data
         writer = csv.writer(file)
         
         # Header
-        header = ["timeR (float64)[1]"] + [f"raw_ch{ch+1} (float64)[1]" for ch in channel_range]
-        header += ["timeI (float64)[1]"] + [f"integ_ch{ch+1} (float64)[1]" for ch in channel_range]
+        header = ["timeR (float64)[1]"] + [f"raw_ch{ch} (float64)[1]" for ch in channel_range]
+        header += ["timeI (float64)[1]"] + [f"integ_ch{ch} (float64)[1]" for ch in channel_range]
         header += ["chopper_trigger (float64)[1]"]
         writer.writerow(header)
 
