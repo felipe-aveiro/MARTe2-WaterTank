@@ -207,6 +207,8 @@ def show_main_plots():
     plot2.plot(time, df_filtered[mpip_col].values, pen='r')
     setup_clickable_plot(plot2, "Iₚ", "A")
 
+    plot1.setXLink(plot2)
+
     plot_widget.nextRow()
     plot3 = plot_widget.addPlot()
     plot3.setLabel('bottom', 'Time [ms]')
@@ -246,6 +248,9 @@ def show_mprz_plots():
     plot5.setLimits(xMin=time_min, xMax=time_max)
     plot5.plot(time, df_filtered[mpz_col].values, pen='m')
     setup_clickable_plot(plot5, "z", "m")
+
+    plot4.setXLink(plot5)
+
     toggle_buttons(show_right1=False, show_right2=True, show_left1=True, show_left2=False)
 
 def show_rogowski_comparison_plot():
