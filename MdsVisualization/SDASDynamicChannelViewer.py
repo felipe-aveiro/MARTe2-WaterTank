@@ -6,7 +6,7 @@ from sdas.core.client.SDASClient import SDASClient
 
 HOST = 'baco.ipfn.tecnico.ulisboa.pt'
 PORT = 8888
-SHOT_NUMBER = 53071
+SHOT_NUMBER = 46241
 START_CHANNEL = 228  # initial channel
 
 class SDASPlotter(QtWidgets.QMainWindow):
@@ -99,6 +99,6 @@ class SDASPlotter(QtWidgets.QMainWindow):
 if __name__ == '__main__':
     app = QtWidgets.QApplication(sys.argv)
     window = SDASPlotter()
-    window.show()
+    window.showMaximized()
     window.keyPressEvent = lambda event: app.quit() if event.key() == QtCore.Qt.Key_Escape else None
     sys.exit(app.exec_())
