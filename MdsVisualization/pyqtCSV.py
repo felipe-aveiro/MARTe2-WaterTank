@@ -123,21 +123,38 @@ pid_v_col = "VerticalPFCVoltageRequest (float64)[1]"
 pid_r_col = "RadialPFCVoltageRequest (float64)[1]"
 pid_available = pid_v_col in df.columns and pid_r_col in df.columns
 
+has_chopper = chopper_col in df.columns
+has_rogowski = rogowski_col is not None
+
 full_time = (df[time_col] - df[time_col].iloc[0]) * 1e3
 full_time_min, full_time_max = full_time.min(), full_time.max()
-start_index = df[df[chopper_col] == 3].index.min()
-chopper_time = full_time.values - full_time.values[start_index] if pd.notna(start_index) else full_time.values
 
-if pd.notna(start_index):
-    df_filtered = df.loc[start_index:].reset_index(drop=True)
-    time = (df_filtered[time_col] - df_filtered[time_col].iloc[0]) * 1e3
-    time = time.values
+if has_chopper:
+    start_index = df[df[chopper_col] == 3].index.min()
+    if pd.notna(start_index):
+        df_filtered = df.loc[start_index:].reset_index(drop=True)
+        time = (df_filtered[time_col] - df_filtered[time_col].iloc[0]) * 1e3
+        time = time.values
+    else:
+        QtWidgets.QMessageBox.warning(None, "Warning", "No chopper_trigger == 3 found. Showing full signal.")
+        df_filtered = df.copy()
+        time = full_time.values
+    chopper_time = full_time.values - full_time.values[start_index] if pd.notna(start_index) else full_time.values
 else:
-    QtWidgets.QMessageBox.warning(None, "Warning", "No chopper_trigger == 3 found. Showing full signal.")
     df_filtered = df.copy()
     time = full_time.values
+    chopper_time = full_time.values  # default to full time if no chopper
 
 time_min, time_max = time.min(), time.max()
+current_xrange = [time_min, time_max]
+
+def save_current_xrange():
+    global current_xrange
+    try:
+        view = plot_widget.getItem(0, 0).vb.viewRange()[0]
+        current_xrange = view
+    except Exception:
+        pass
 
 main_window = QtWidgets.QMainWindow()
 main_window.setWindowTitle("Magnetic Reconstruction Viewer")
@@ -169,6 +186,7 @@ plot_widget = pg.GraphicsLayoutWidget()
 main_layout.addWidget(plot_widget, stretch=1)
 
 def show_main_plots():
+    save_current_xrange()
     plot_widget.clear()
     global plot1, plot2, plot3
 
@@ -183,7 +201,7 @@ def show_main_plots():
     plot1.setLabel('bottom', 'Time [ms]')
     plot1.setLabel('left', 'Magnetic Field [T]')
     plot1.addLegend()
-    plot1.setXRange(200, 600, padding=0)
+    plot1.setXRange(time_min, time_max, padding=0)
     plot1.setLimits(xMin=time_min, xMax=time_max)
     plot1.setAutoVisible(y=True)
     zero_line1 = pg.InfiniteLine(pos=0, angle=0, pen=pg.mkPen('w', width=1, style=QtCore.Qt.DashLine))
@@ -206,7 +224,7 @@ def show_main_plots():
     plot2 = plot_widget.addPlot(title="outputMpIp vs Time")
     plot2.setLabel('bottom', 'Time [ms]')
     plot2.setLabel('left', 'Plasma Current [A]')
-    plot2.setXRange(200, 600, padding=0)
+    plot2.setXRange(time_min, time_max, padding=0)
     plot2.setLimits(xMin=time_min, xMax=time_max)
     plot2.setAutoVisible(y=True)
     zero_line2 = pg.InfiniteLine(pos=0, angle=0, pen=pg.mkPen('w', width=1, style=QtCore.Qt.DashLine))
@@ -216,21 +234,27 @@ def show_main_plots():
 
     plot1.setXLink(plot2)
 
-    plot_widget.nextRow()
-    plot3 = plot_widget.addPlot()
-    plot3.setLabel('bottom', 'Time [ms]')
-    plot3.setLabel('left', 'Trigger')
-    plot3.setXRange(chopper_time.min(), chopper_time.max(), padding=0)
-    plot3.setLimits(xMin=chopper_time.min(), xMax=chopper_time.max())
-    plot3.setYRange(0, 3)
-    plot3.setLimits(yMin=0, yMax=3)
-    plot3.setAutoVisible(y=False)
-    plot3.plot(chopper_time, df[chopper_col].values, pen=pg.mkPen('w', width=1))
-    plot3.getViewBox().setMinimumHeight(60)
-    plot3.setMaximumHeight(100)
+    plot1.setXRange(*current_xrange, padding=0)
+    plot2.setXRange(*current_xrange, padding=0)
+
+    if has_chopper:
+        plot_widget.nextRow()
+        plot3 = plot_widget.addPlot()
+        plot3.setLabel('bottom', 'Time [ms]')
+        plot3.setLabel('left', 'Trigger')
+        plot3.setXRange(chopper_time.min(), chopper_time.max(), padding=0)
+        plot3.setLimits(xMin=chopper_time.min(), xMax=chopper_time.max())
+        plot3.setYRange(0, 3)
+        plot3.setLimits(yMin=0, yMax=3)
+        plot3.setAutoVisible(y=False)
+        plot3.plot(chopper_time, df[chopper_col].values, pen=pg.mkPen('w', width=1))
+        plot3.getViewBox().setMinimumHeight(60)
+        plot3.setMaximumHeight(100)
+
     toggle_buttons(show_right1=True)
 
 def show_mprz_plots():
+    save_current_xrange()
     plot_widget.clear()
     
     export1_btn.hide()
@@ -243,8 +267,8 @@ def show_mprz_plots():
     plot4 = plot_widget.addPlot(title="outputMpR vs Time")
     plot4.setLabel('bottom', 'Time [ms]')
     plot4.setLabel('left', 'Radial Position [m]')
-    plot4.setXRange(280, 500, padding=0)
-    plot4.setLimits(xMin=280, xMax=500)
+    plot4.setXRange(time_min, time_max, padding=0)
+    plot4.setLimits(xMin=time_min, xMax=time_max)
     plot4.setYRange(0.46-0.1, 0.46+0.1)
     zero_lineR_center = pg.InfiniteLine(pos=0.46, angle=0, pen=pg.mkPen('w', width=1, style=QtCore.Qt.DashLine))
     zero_lineR_upper = pg.InfiniteLine(pos=0.46+0.085, angle=0, pen=pg.mkPen('r', width=2, style=QtCore.Qt.DotLine))
@@ -259,8 +283,8 @@ def show_mprz_plots():
     plot5 = plot_widget.addPlot(title="outputMpZ vs Time")
     plot5.setLabel('bottom', 'Time [ms]')
     plot5.setLabel('left', 'Vertical Position [m]')
-    plot5.setXRange(280, 500, padding=0)
-    plot5.setLimits(xMin=280, xMax=500)
+    plot5.setXRange(time_min, time_max, padding=0)
+    plot5.setLimits(xMin=time_min, xMax=time_max)
     plot5.setYRange(-0.1, 0.1)
     zero_lineZ_center = pg.InfiniteLine(pos=0, angle=0, pen=pg.mkPen('w', width=1, style=QtCore.Qt.DashLine))
     zero_lineZ_upper = pg.InfiniteLine(pos=0.085, angle=0, pen=pg.mkPen('r', width=2, style=QtCore.Qt.DotLine))
@@ -281,11 +305,15 @@ def show_mprz_plots():
     plot4.vb.sigYRangeChanged.connect(lambda: sync_y_range(plot4, plot5, offset_4to5))
     plot5.vb.sigYRangeChanged.connect(lambda: sync_y_range(plot5, plot4, offset_5to4))
 
+    plot4.setXRange(*current_xrange, padding=0)
+    plot5.setXRange(*current_xrange, padding=0)
+
     toggle_buttons(show_right2=True, show_left1=True)
 
 
 def show_rogowski_comparison_plot():
-    plot_widget.clear()
+    save_current_xrange()
+    plot_widget.clear() 
     export1_btn.hide()
     export2_btn.hide()
     export3_btn.hide()
@@ -297,7 +325,7 @@ def show_rogowski_comparison_plot():
     plot_rogowski.setLabel('bottom', 'Time [ms]')
     plot_rogowski.setLabel('left', 'A')
     plot_rogowski.addLegend()
-    plot_rogowski.setXRange(280, 500, padding=0)
+    plot_rogowski.setXRange(time_min, time_max, padding=0)
     plot_rogowski.setLimits(xMin=time_min, xMax=time_max)
     if pd.notna(rogowski_col): plot_rogowski.plot(time, df_filtered[rogowski_col].values, pen='m', name="Rogowski Measurement")
     else: QtWidgets.QMessageBox.warning(None, "Warning", "No Rogowski data found.")
@@ -306,6 +334,9 @@ def show_rogowski_comparison_plot():
     zero_line = pg.InfiniteLine(pos=0, angle=0, pen=pg.mkPen('w', width=1, style=QtCore.Qt.DashLine))
     plot_rogowski.addItem(zero_line)
     setup_clickable_plot(plot_rogowski, "Iₚ", "A")
+
+    plot_rogowski.setXRange(*current_xrange, padding=0)
+
     toggle_buttons(show_left2=True, show_right3=True)
 
     if pid_available:
@@ -313,7 +344,12 @@ def show_rogowski_comparison_plot():
     else:
         right_arrow3.hide()
 
+    if not has_rogowski:
+        right_arrow3.hide()
+        QtWidgets.QMessageBox.information(None, "Info", "Rogowski column not available. Comparison limited.")
+
 def show_pid_request_plots():
+    save_current_xrange()
     plot_widget.clear()
 
     export1_btn.hide()
@@ -327,7 +363,7 @@ def show_pid_request_plots():
     plot_vr = plot_widget.addPlot(title="RadialPFCVoltageRequest vs Time")
     plot_vr.setLabel('bottom', 'Time [ms]')
     plot_vr.setLabel('left', 'Radial Voltage [V]')
-    plot_vr.setXRange(280, 500, padding=0)
+    plot_vr.setXRange(time_min, time_max, padding=0)
     plot_vr.setLimits(xMin=time_min, xMax=time_max)
     plot_vr.setAutoVisible(y=True)
     zero_line_r = pg.InfiniteLine(pos=0, angle=0, pen=pg.mkPen('w', width=1, style=QtCore.Qt.DashLine))
@@ -341,12 +377,14 @@ def show_pid_request_plots():
     plot_vz = plot_widget.addPlot(title="VerticalPFCVoltageRequest vs Time")
     plot_vz.setLabel('bottom', 'Time [ms]')
     plot_vz.setLabel('left', 'Vertical Voltage [V]')
-    plot_vz.setXRange(280, 500, padding=0)
+    plot_vz.setXRange(time_min, time_max, padding=0)
     plot_vz.setLimits(xMin=time_min, xMax=time_max)
     plot_vz.setAutoVisible(y=True)
     zero_line_z = pg.InfiniteLine(pos=0, angle=0, pen=pg.mkPen('w', width=1, style=QtCore.Qt.DashLine))
     plot_vz.addItem(zero_line_z)
     plot_vz.plot(time, df_filtered[pid_v_col].values, pen='m')
+    plot_vz.setYRange(plot_vr.vb.viewRange()[1][0], plot_vr.vb.viewRange()[1][1])
+
     setup_clickable_plot(plot_vz, "Signal", "")
 
     # Link horizontal zoom/pan
@@ -360,6 +398,9 @@ def show_pid_request_plots():
 
     plot_vr.vb.sigYRangeChanged.connect(lambda: sync_y_range(plot_vr, plot_vz, offset_4to5))
     plot_vz.vb.sigYRangeChanged.connect(lambda: sync_y_range(plot_vz, plot_vr, offset_5to4))
+
+    plot_vr.setXRange(*current_xrange, padding=0)
+    plot_vz.setXRange(*current_xrange, padding=0)
 
     toggle_buttons(show_left3=True)
 
@@ -385,10 +426,6 @@ def sync_y_range(source_plot, target_plot, offset):
     target_plot.getAxis('left').setRange(*new_target_range)
     target_plot.getAxis('left').update()
 
-def return_to_main_plots():
-    show_main_plots()
-    toggle_buttons(show_right=True, show_left=False)
-
 def export_plot_with_dialog(plot, suggested_name):
     options = QtWidgets.QFileDialog.Options()
     file_path, _ = QtWidgets.QFileDialog.getSaveFileName(
@@ -405,8 +442,8 @@ def export_plot_with_dialog(plot, suggested_name):
 def toggle_buttons(show_right1=False, show_right2=False, show_right3=False,
                    show_left1=False, show_left2=False, show_left3=False):
     right_arrow.setVisible(show_right1)
-    right_arrow2.setVisible(show_right2)
-    right_arrow3.setVisible(pid_available and show_right3)
+    right_arrow2.setVisible(has_rogowski and show_right2)
+    right_arrow3.setVisible(pid_available and has_rogowski and show_right3)
     left_arrow.setVisible(show_left1)
     left_arrow2.setVisible(show_left2)
     left_arrow3.setVisible(pid_available and show_left3)
@@ -434,7 +471,7 @@ left_arrow = QtWidgets.QPushButton("⊲", main_window)
 left_arrow.setToolTip("Show Mirnov & MpIp Plots")
 left_arrow.setFixedSize(40, 40)
 left_arrow.setStyleSheet(right_arrow.styleSheet())
-left_arrow.clicked.connect(return_to_main_plots)
+left_arrow.clicked.connect(show_main_plots)
 
 right_arrow2 = QtWidgets.QPushButton("⊳", main_window)
 right_arrow2.setToolTip("Show Comparison Plot")
@@ -467,7 +504,10 @@ for btn in (right_arrow, left_arrow, right_arrow2, left_arrow2, right_arrow3, le
 def reposition_arrows():
     h = main_window.height()
     # ====== Main Plots ===========
-    right_arrow.move(main_window.width() - 60, h // 2 - 48)
+    if not has_chopper:
+        right_arrow.move(main_window.width() - 60, h // 2 + 2)
+    else:
+        right_arrow.move(main_window.width() - 60, h // 2 - 48)
     # ====== Position Plots =======
     left_arrow.move(40, h // 2 + 2)
     right_arrow2.move(main_window.width() - 60, h // 2 + 2)
@@ -475,7 +515,7 @@ def reposition_arrows():
     left_arrow2.move(40, h // 2 + 20)
     right_arrow3.move(main_window.width() - 60, h // 2 + 20)
     # ====== PID Plots ============
-    left_arrow3.move(main_window.width() - 60, h // 2 + 2)
+    left_arrow3.move(40, h // 2 + 2)
 
 export1_btn.clicked.connect(lambda: export_plot_with_dialog(plot1, "mirnov_plot.png"))
 export2_btn.clicked.connect(lambda: export_plot_with_dialog(plot2, "mpip_plot.png"))
