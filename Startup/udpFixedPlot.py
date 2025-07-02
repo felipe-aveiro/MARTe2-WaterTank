@@ -25,8 +25,8 @@ heights = [0.0]  # Store height values (y axis); force the first water height va
 # ------------------------------------------------------------------------
 
 # ------------------------------------------------------------------------
-# Set maximum time of 10 seconds
-end_time = 10
+# Set maximum time of 60 seconds
+end_time = 60
 time_interval = 1e-3  # Sampling time
 # ------------------------------------------------------------------------
 
@@ -39,7 +39,8 @@ line, = ax.plot([], [], label='Water Height', linewidth=2, color='#2285c5') # Li
 line2, = ax.plot([], [], label='Reference Value', linestyle='--', linewidth=2, color='#616161')  # Line for reference value
 
 ax.set_xlim(0, end_time)  
-ax.set_ylim(0, 4) 
+ax.set_ylim(0, 1.5) 
+ax.set_yticks([0.5, 1, 1.5])
 ax.set_xlabel('Time (seconds)')
 ax.set_ylabel('Water Height (m)')
 ax.legend(frameon=True, edgecolor='black')
@@ -47,9 +48,9 @@ ax.legend(frameon=True, edgecolor='black')
 plt.rcParams['font.family'] = 'Helvetica'
 
 # Customization
-for x in range(0,end_time):
-    plt.axvline(x=x, color='#b6b6b6', linestyle='-', linewidth=0.5)  
-for y in [4, 3, 2, 1]:
+for x in [60, 50, 40, 30, 20, 10, 0]:
+   plt.axvline(x=x, color='#b6b6b6', linestyle='-', linewidth=0.5)  
+for y in [1.5, 1, 0.5]:
     plt.axhline(y=y, color='#b6b6b6', linestyle='-', linewidth=0.5)
 
 plt.tick_params(axis='both', direction='in', length=10, color='black')
@@ -59,10 +60,10 @@ plt.gcf().set_facecolor('#dcdcdc')
 time = np.zeros(2, dtype=np.uint32)
 
 # Adjust x-ticks to include odd numbers
-x_ticks = np.arange(0, 11, 1)  # Adjust to display from 0 to 10 seconds (step of 1)
+x_ticks = np.arange(0, 61, 10)  # Adjust to display from 0 to 60 seconds (step of 10)
 plt.xticks(x_ticks)  # Set x-axis ticks to include all numbers
-odd_x_ticks = np.arange(1, 11, 2)  # Odd numbers between 1 and 10
-plt.xticks(np.append(x_ticks, odd_x_ticks))  # Include odd numbers as well
+#odd_x_ticks = np.arange(1, 61, 2)  # Odd numbers between 1 and 10
+#plt.xticks(np.append(x_ticks, odd_x_ticks))  # Include odd numbers as well
 
 if time_interval == 1e-3:
     time_index = 'ms'
@@ -85,7 +86,7 @@ while time[0] <= end_time*(1/time_interval) - 1:
         ref_values.append(values64[1])
         heights.append(values64[2])
 
-        print(f"Timer: {time[0]} {time_index} | RefValue: {values64[1]:.2f} | WaterHeight: {values64[2]:.3f}")
+        print(f"Timer: {time[0]*time_interval:.3f} s | RefValue: {values64[1]:.2f} | WaterHeight: {values64[2]:.3f}")
 
     except KeyboardInterrupt:
         print("\nApplication killed.\n")
@@ -100,6 +101,5 @@ line2.set_ydata(ref_values)  # Set reference height values
 # Save the plot window with the data
 # Change name according to specific scenario
 plt.savefig('/home/felipe/git-repos/MARTe2-WaterTank/Startup/Outputs/MARTe2-Engine/output_graph.png')
-
 # Close socket
 server_socket.close()
