@@ -16,10 +16,18 @@ def get_arguments():
     return parser.parse_args()
 
 def signal_name_dict():
-    return {
+    signal_dict = {
+        # Add Mirnov probe channels (166–178)
         f'Mirnov coil no. {n+1}': f'MARTE_NODE_IVO3.DataCollection.Channel_{str(166+n).zfill(3)}'
         for n in range(12)
     }
+
+    # Add Langmuir probe channels (024–027)
+    for i in range(4):
+        signal_dict[f'Langmuir probe no. {i+1}'] = f'MARTE_NODE_IVO3.DataCollection.Channel_{str(24+i).zfill(3)}'
+
+    return signal_dict
+
 
 def LoadSdasData(client, channelID, shotnr):
     dataStruct = client.getData(channelID, '0x0000', shotnr)
