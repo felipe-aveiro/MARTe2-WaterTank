@@ -68,29 +68,17 @@ def setup_clickable_plot(plot, y_index, y_unit):
 
     plot.scene().sigMouseClicked.connect(on_mouse_click)
 
-# === Remember last directory ===
-LAST_DIR_FILE = os.path.join(os.path.expanduser("~"), "git-repos/MARTe2-WaterTank/MdsVisualization/", "mirnov_viewer_last_dir.txt")
-if os.path.exists(LAST_DIR_FILE):
-    with open(LAST_DIR_FILE, "r") as f:
-        last_dir = f.read().strip()
-else:
-    last_dir = ""
-
 # === Ask user to open a CSV file ===
 csv_path, _ = QtWidgets.QFileDialog.getOpenFileName(
     None,
     "Open CSV File",
-    last_dir,
+    "/home/felipe/git-repos/MARTe2-WaterTank/Startup/Outputs/",
     "CSV Files (*.csv);;All Files (*)"
 )
 
 if not csv_path:
     QtWidgets.QMessageBox.critical(None, "Error", "No CSV file selected... Exiting.")
     sys.exit()
-
-# === Save directory for future use ===
-with open(LAST_DIR_FILE, "w") as f:
-    f.write(os.path.dirname(csv_path))
 
 # === Try loading CSV with reliable delimiter detection based on ']' separator ===
 try:
