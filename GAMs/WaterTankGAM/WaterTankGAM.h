@@ -2,7 +2,7 @@
  * @file WaterTankGAM.h
  * @brief Header file for class WaterTankGAM
  * @date 02/07/2025
- * @author Felipe Tassari Aveiro (adapted from previous work by Andre Neto)
+ * @authors Bernardo Brotas Carvalho & Felipe Tassari Aveiro (adapted from previous work by Andre Neto)
  *
  * @copyright Copyright 2015 F4E | European Joint Undertaking for ITER and
  * the Development of Fusion Energy ('Fusion for Energy').
