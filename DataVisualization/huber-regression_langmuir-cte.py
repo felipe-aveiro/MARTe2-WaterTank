@@ -13,7 +13,7 @@ app = QtWidgets.QApplication(sys.argv)
 file_path, _ = QtWidgets.QFileDialog.getOpenFileName(
     None,
     "Open CSV File",
-    "/home/felipe/git-repos/MARTe2-WaterTank/Startup/Outputs/",
+    "/home/felipe/git-repos/MARTe2-WaterTank/DataVisualization/Outputs/",
     "CSV Files (*.csv);;All Files (*)"
 )
 if not file_path:
@@ -130,7 +130,7 @@ p2.addItem(zero_lineZ_center)
 p2.addItem(zero_lineZ_upper)
 p2.addItem(zero_lineZ_lower)
 
-output_file = '/home/felipe/git-repos/MARTe2-WaterTank/Startup/Outputs/langmuir_coeficients.csv'
+output_file = '/home/felipe/git-repos/MARTe2-WaterTank/DataVisualization/Outputs/langmuir_coeficients.csv'
 
 shot_name = os.path.basename(file_path)
 shot_number = ''.join(filter(str.isdigit, os.path.splitext(shot_name)[0]))

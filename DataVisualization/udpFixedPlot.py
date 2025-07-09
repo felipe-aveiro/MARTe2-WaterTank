@@ -100,6 +100,6 @@ line2.set_ydata(ref_values)  # Set reference height values
 
 # Save the plot window with the data
 # Change name according to specific scenario
-plt.savefig('/home/felipe/git-repos/MARTe2-WaterTank/Startup/Outputs/MARTe2-Engine/output_graph.png')
+plt.savefig('/home/felipe/git-repos/MARTe2-WaterTank/DataVisualization/Outputs/MARTe2-Engine/output_graph_Simulink-comparison.png')
 # Close socket
 server_socket.close()

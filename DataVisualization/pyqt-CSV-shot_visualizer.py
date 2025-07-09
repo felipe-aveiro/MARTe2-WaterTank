@@ -72,7 +72,7 @@ def setup_clickable_plot(plot, y_index, y_unit):
 csv_path, _ = QtWidgets.QFileDialog.getOpenFileName(
     None,
     "Open CSV File",
-    "/home/felipe/git-repos/MARTe2-WaterTank/Startup/Outputs/",
+    "/home/felipe/git-repos/MARTe2-WaterTank/DataVisualization/Outputs/",
     "CSV Files (*.csv);;All Files (*)"
 )
 
@@ -419,7 +419,7 @@ def export_plot_with_dialog(plot, suggested_name):
     file_path, _ = QtWidgets.QFileDialog.getSaveFileName(
         main_window,
         "Save Plot As...",
-        os.path.join(os.path.expanduser("~"), "git-repos/MARTe2-WaterTank/Startup/Outputs/pyqtCSV-plots/", suggested_name),
+        os.path.join(os.path.expanduser("~"), "git-repos/MARTe2-WaterTank/DataVisualization/Outputs/pyqtCSV-plots/", suggested_name),
         "PNG Files (*.png);;All Files (*)",
         options=options
     )

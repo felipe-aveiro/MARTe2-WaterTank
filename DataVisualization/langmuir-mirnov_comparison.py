@@ -11,7 +11,7 @@ app = QtWidgets.QApplication(sys.argv)
 csv_path, _ = QtWidgets.QFileDialog.getOpenFileName(
     None,
     "Open CSV File",
-    "/home/felipe/git-repos/MARTe2-WaterTank/Startup/Outputs/",
+    "/home/felipe/git-repos/MARTe2-WaterTank/DataVisualization/Outputs/",
     "CSV Files (*.csv);;All Files (*)"
 )
 

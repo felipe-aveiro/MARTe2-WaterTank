@@ -1,7 +1,7 @@
 import pandas as pd
 
 # === 1. Load CSV with coefficients per shot ===
-csv_path = '/home/felipe/git-repos/MARTe2-WaterTank/Startup/Outputs/langmuir_coeficients.csv'
+csv_path = '/home/felipe/git-repos/MARTe2-WaterTank/DataVisualization/Outputs/langmuir_coeficients.csv'
 df = pd.read_csv(csv_path)
 
 # === 2. Define weights based on plasma behavior quality (AC pulse stability, symmetry, etc.) ===
