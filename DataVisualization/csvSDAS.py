@@ -7,7 +7,7 @@ from sdas.core.SDAStime import TimeStamp
 
 HOST = 'baco.ipfn.tecnico.ulisboa.pt'
 PORT = 8888
-DEFAULT_OUTPUT_DIR = '/home/felipe/git-repos/MARTe2-WaterTank/MdsVisualization/ISTTOK_shots_CSV_files/csv'
+DEFAULT_OUTPUT_DIR = '/home/felipe/git-repos/MARTe2-WaterTank/DataVisualization/ISTTOK_shots_CSV_files/csv'
 
 def get_arguments():
     parser = argparse.ArgumentParser(description='Export Mirnov coil data from SDAS to CSV.')
@@ -92,7 +92,7 @@ if __name__ == '__main__':
     if args.o:
         output_file = args.o
     else:
-        output_file = os.path.join(DEFAULT_OUTPUT_DIR, f"shot_{shot}.csv")
+        output_file = os.path.join(DEFAULT_OUTPUT_DIR, f"SDAS_shot_{shot}.csv")
 
     print(f"\nFetching data for shot #{shot}...\n")
     signals, time_vector = get_all_data(shot)

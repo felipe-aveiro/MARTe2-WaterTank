@@ -13,7 +13,7 @@ app = QtWidgets.QApplication(sys.argv)
 HOST = 'baco.ipfn.tecnico.ulisboa.pt'
 PORT = 8888
 
-# csv_path = "/home/felipe/git-repos/MARTe2-WaterTank/Startup/Outputs/IsttokOutput.csv" ## default
+# csv_path = "/home/felipe/git-repos/MARTe2-WaterTank/DataVisualization/Outputs/IsttokOutput.csv" ## default
 
 def align_signals(csv_signal, sdas_signal):
     correlation = np.correlate(csv_signal - np.mean(csv_signal), sdas_signal - np.mean(sdas_signal), mode='full')
@@ -115,7 +115,7 @@ def plot_comparison(csv_time, csv_data, sdas_data):
     curves = []
 
     for i in range(12):
-        if csv_path == "/home/felipe/git-repos/MARTe2-WaterTank/Startup/Outputs/IsttokOutput.csv": csv_curve = plot.plot(csv_time_aligned, csv_data[i]*1e-9, pen=pg.mkPen(color=csv_color, width=1.2), name=f"Mirnov {i+1} CSV")
+        if csv_path == "/home/felipe/git-repos/MARTe2-WaterTank/DataVisualization/Outputs/IsttokOutput.csv": csv_curve = plot.plot(csv_time_aligned, csv_data[i]*1e-9, pen=pg.mkPen(color=csv_color, width=1.2), name=f"Mirnov {i+1} CSV")
         else: csv_curve = plot.plot(csv_time_aligned, csv_data[i], pen=pg.mkPen(color=csv_color, width=1.2), name=f"Mirnov {i+1} CSV")
         sdas_curve = plot.plot(sdas_data[i][1], sdas_data[i][0], pen=pg.mkPen(color=sdas_color, width=1.2, style=QtCore.Qt.DashLine), name=f"Mirnov {i+1} SDAS")
         curves.append((csv_curve, sdas_curve))
@@ -169,7 +169,7 @@ if __name__ == '__main__':
     csv_path, _ = QtWidgets.QFileDialog.getOpenFileName(
         None,
         "Open CSV File",
-        "/home/felipe/git-repos/MARTe2-WaterTank/Startup/Outputs/",
+        "/home/felipe/git-repos/MARTe2-WaterTank/DataVisualization/Outputs/",
         "CSV Files (*.csv);;All Files (*)"
     )
     csv_time, _, _, csv_mirnov = load_csv_data(csv_path)

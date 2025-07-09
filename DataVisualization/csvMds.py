@@ -81,9 +81,9 @@ def main():
 
     # Decide file name based on compression
     if args.uncompressed:
-        output_file = os.path.join(args.output, "ISTTOK_shots_CSV_files", "csv", f"shot_{args.shot}.csv")
+        output_file = os.path.join(args.output, "ISTTOK_shots_CSV_files", "csv", f"MDS_shot_{args.shot}.csv")
     else:
-        output_file = os.path.join(args.output, "ISTTOK_shots_CSV_files", "csv.gz", f"shot_{args.shot}.csv.gz")
+        output_file = os.path.join(args.output, "ISTTOK_shots_CSV_files", "csv.gz", f"MDS_shot_{args.shot}.csv.gz")
 
     # Ensure full directory tree exists (create parent folders if needed)
     os.makedirs(os.path.dirname(output_file), exist_ok=True)
