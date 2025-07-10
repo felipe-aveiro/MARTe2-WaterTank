@@ -99,8 +99,10 @@ plot_z.addItem(zero_lineZ_lower)
 plot_z.plot(time, df[mpz_col], pen='m', name="Magnetic Coils")
 plot_z.plot(time, df[epz_col], pen='g', name="Electric Probes")
 
+# === Link X axis ===
 plot_r.setXLink(plot_z)
 
+# === Synchronize Y-axis zoom/pan ===
 def sync_y_range(source_plot, target_plot, offset):
     if not target_plot.vb:
         return
@@ -127,6 +129,7 @@ offset_z_to_r = r_center - z_center
 plot_r.vb.sigYRangeChanged.connect(lambda: sync_y_range(plot_r, plot_z, offset_r_to_z))
 plot_z.vb.sigYRangeChanged.connect(lambda: sync_y_range(plot_z, plot_r, offset_z_to_r))
 
+# === Show window and run ===
 main_window.showMaximized()
 main_window.keyPressEvent = lambda event: app.quit() if event.key() == QtCore.Qt.Key_Escape else None
 sys.exit(app.exec_())
