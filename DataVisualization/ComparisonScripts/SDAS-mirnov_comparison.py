@@ -7,6 +7,8 @@ import pyqtgraph as pg
 from pyqtgraph.Qt import QtWidgets, QtCore
 import sys
 import os
+import re
+
 
 app = QtWidgets.QApplication(sys.argv)
 
@@ -177,18 +179,18 @@ if __name__ == '__main__':
         "IsttokOutput_Tesla_horario.csv": "53071",
         "IsttokOutput_Tesla.csv": "53071",
         "IsttokOutput_Tesla_PID.csv": "53071"
-        # Adicione aqui outros casos específicos
     }
     csv_filename = os.path.basename(csv_path)
+    match = re.search(r'(\d{5})', csv_filename)
     if csv_filename in unique_csv_filenames:
         pulse_no = unique_csv_filenames[csv_filename]
         print(f"Using hardcoded pulse number '{pulse_no}' for file '{csv_filename}'")
-    elif csv_filename.lower().startswith("isttokoutput_tesla_") and csv_filename[19:24].isdigit():
-        # example: "IsttokOutput_Tesla_46241.csv"
-        pulse_no = int(csv_filename[19:24])
-        print(f"Inferred pulse number '{pulse_no}' from filename")
+    elif match:
+        pulse_no = match.group(1)
+        print(f"Inferred shot number '{pulse_no}' from filename")
     else:
         pulse_no = args.s
-        print(f"Using pulse number from arguments: '{pulse_no}'")
+        print(f"No shot number found in filename. Using argument/default: '{pulse_no}'")
+
     sdas_mirnov = get_sdas_data(pulse_no)
     plot_comparison(csv_time, csv_mirnov, sdas_mirnov)

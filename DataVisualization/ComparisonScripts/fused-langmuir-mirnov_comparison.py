@@ -3,6 +3,9 @@ import os
 import pandas as pd
 import pyqtgraph as pg
 from pyqtgraph.Qt import QtWidgets, QtCore
+import re
+from pyqtgraph.exporters import ImageExporter
+
 
 # === Start Qt app FIRST ===
 app = QtWidgets.QApplication(sys.argv)
@@ -77,8 +80,8 @@ plot_r.addItem(pg.InfiniteLine(pos=0.46, angle=0, pen=pg.mkPen('w', width=1, sty
 plot_r.addItem(pg.InfiniteLine(pos=0.46 + 0.085, angle=0, pen=pg.mkPen('r', width=2, style=QtCore.Qt.DotLine)))
 plot_r.addItem(pg.InfiniteLine(pos=0.46 - 0.085, angle=0, pen=pg.mkPen('r', width=2, style=QtCore.Qt.DotLine)))
 
-plot_r.plot(time, df[mpr_col], pen='c', name="Magnetic Coils")
-plot_r.plot(time, df[epr_col], pen='y', name="Electric Probes")
+plot_r.plot(time, df[mpr_col], pen='m', name="Magnetic Coils")
+plot_r.plot(time, df[epr_col], pen='g', name="Electric Probes")
 plot_r.plot(time, df[fusedr_col], pen='b', name="Fused State")
 
 plot_widget.nextRow()
@@ -120,6 +123,40 @@ offset_z_to_r = plot_r.vb.viewRange()[1][0] - plot_z.vb.viewRange()[1][0]
 
 plot_r.vb.sigYRangeChanged.connect(lambda: sync_y_range(plot_r, plot_z, offset_r_to_z))
 plot_z.vb.sigYRangeChanged.connect(lambda: sync_y_range(plot_z, plot_r, offset_z_to_r))
+
+# === Export buttons ===
+button_layout = QtWidgets.QHBoxLayout()
+main_layout.addLayout(button_layout)
+
+export_r_button = QtWidgets.QPushButton("Export Radial Plot")
+export_z_button = QtWidgets.QPushButton("Export Vertical Plot")
+
+button_layout.addWidget(export_r_button)
+button_layout.addWidget(export_z_button)
+
+def export_plot(plot_item, default_name):
+    default_dir = "/home/felipe/git-repos/MARTe2-WaterTank/DataVisualization/Outputs/PlasmaPositionPlots"
+    os.makedirs(default_dir, exist_ok=True)
+    default_path = os.path.join(default_dir, f"{default_name}.png")
+    path, _ = QtWidgets.QFileDialog.getSaveFileName(
+        None,
+        "Save Plot as PNG",
+        default_path,
+        "PNG Files (*.png)"
+    )
+    if path:
+        exporter = ImageExporter(plot_item.scene())
+        exporter.parameters()['width'] = 1200
+        exporter.export(path)
+        print(f"\nPlot saved to {path}\n")
+
+csv_filename = os.path.basename(csv_path)
+match = re.search(r'(\d{5})', csv_filename)
+shot_number = match.group(1) if match else "unknown"
+
+export_r_button.clicked.connect(lambda: export_plot(plot_r, f"radial_position_plot_shot_{shot_number}"))
+export_z_button.clicked.connect(lambda: export_plot(plot_z, f"vertical_position_plot_shot_{shot_number}"))
+
 
 # === Show window and run ===
 main_window.showMaximized()
