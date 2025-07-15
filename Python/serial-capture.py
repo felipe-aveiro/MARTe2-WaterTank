@@ -10,7 +10,7 @@ https://makersportal.com/blog/2018/2/25/python-datalogger-reading-the-serial-out
 import serial
 import numpy as np
 
-ser = serial.Serial('/dev/ttyLoopRd', 115200, timeout=2)
+ser = serial.Serial('/dev/ttyLoopRd', 921600, timeout=2)
 
 while True:
     try:
