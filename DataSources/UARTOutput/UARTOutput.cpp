@@ -235,6 +235,9 @@ namespace MARTe {
     if (ok) {
       ok = serial.Open(portName.Buffer());
     }
+    if (!ok) {
+        REPORT_ERROR_PARAMETERS(ErrorManagement::ParametersError, "The port %s Not opened.", portName);
+    }
 
     //Get individual signal parameters
     uint32 i = 0u;
@@ -337,14 +340,17 @@ namespace MARTe {
       uint32 i;
       int32 w = 24;
       bool ok = true;
+      char8 text[] = "ola";
       //if (channelsMemory != NULL_PTR(float32 *)) {
 
         //                value = channelsMemory[0] / DAC_RANGE;
           //for (i = 0u; (i < numberOfDACsEnabled ) && (ok); i++) {
-          float32 value = channelValue / outputRange;
+      int32 ser_value = channelValue / outputRange * 1000000.0;
+      REPORT_ERROR_PARAMETERS(ErrorManagement::Information, "Synchronise called. value: %f, %d", channelValue, ser_value);
           //w = SetDacReg(i, value);
-          char8 *data = reinterpret_cast<char8*>(&w);
-          serial.Write(data, 4);
+      char8 *data = reinterpret_cast<char8*>(&ser_value);
+      serial.Write(data, sizeof(int32));
+      //serial.Write(text, 4);
           //write(boardFileDescriptor,  &w, 4);
           //                value = channelsMemory[1] / DAC_RANGE;
           //value = channelsMemory[1] / DAC_RANGE * pow(2,17);
