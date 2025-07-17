@@ -4,7 +4,7 @@ from sdas.core.SDAStime import TimeStamp
 import numpy as np
 import pandas as pd
 import pyqtgraph as pg
-from pyqtgraph.Qt import QtWidgets, QtCore
+from pyqtgraph.Qt import QtWidgets, QtCore, QtGui
 from pyqtgraph.exporters import ImageExporter
 import sys
 import os
@@ -81,10 +81,19 @@ def plot_currents(csv_time, csv_current, sdas_time, sdas_current):
     plot = plot_widget.addPlot(title="Plasma Current")
     plot.setLabel('bottom', 'Time (ms)')
     plot.setLabel('left', 'Current [A]')
-    plot.addLegend()
-    plot.setXRange(0, 514, padding=0)
+    legend = plot.addLegend()
+    legend.setLabelTextSize("11pt")
+    plot.setXRange(160, 400, padding=0)
     plot.setLimits(xMin=csv_time_aligned.min(), xMax=csv_time_aligned.max())
     plot.showGrid(x=True, y=True)
+    
+    # === Adjust fonts  ===
+    title_font = QtGui.QFont("Arial", 14, QtGui.QFont.Bold)
+    axis_font = QtGui.QFont("Arial", 11, QtGui.QFont.Bold)
+    
+    plot.titleLabel.item.setFont(title_font)
+    plot.getAxis("bottom").label.setFont(axis_font)
+    plot.getAxis("left").label.setFont(axis_font)
 
     plot.plot(csv_time_aligned, csv_current, pen=pg.mkPen('b', width=2), name="Magnetic Reconstruction")
     plot.plot(sdas_time, sdas_current, pen=pg.mkPen('r', width=2, style=QtCore.Qt.DashLine), name="Rogowski Coil Measurement")
