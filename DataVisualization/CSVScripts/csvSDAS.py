@@ -25,6 +25,9 @@ def signal_name_dict():
     # Add Langmuir probe channels (024–027)
     for i in range(4):
         signal_dict[f'Langmuir probe no. {i+1}'] = f'MARTE_NODE_IVO3.DataCollection.Channel_{str(24+i).zfill(3)}'
+    
+    # Rogowski coil channel (228)
+    signal_dict['Rogowski coil'] = 'MARTE_NODE_IVO3.DataCollection.Channel_228'
 
     return signal_dict
 
@@ -71,17 +74,23 @@ def save_to_csv(signals: dict, time_vector: np.ndarray, output_path: str):
         writer = csv.writer(csvfile, delimiter=',')
 
         # Header
-        header = ['#timeI (float64)[1]'] + [f'integ_ch{idx} (float64)[1]' for idx in sorted(signals.keys())]
+        header = ['#timeI (float64)[1]']
+        for idx in sorted(signals.keys()):
+            if idx < 12:
+                header.append(f'integ_ch{idx} (float64)[1]') # Mirnovs
+            elif 12 <= idx < 16:
+                header.append(f'integ_ch{idx} (float64)[1]') # Langmuirs
+            else:
+                header.append('rogowski_ch (float64)[1]') # Rogowski
         writer.writerow(header)
-
+        
         # Write data
         n_samples = len(time_vector)
         for i in range(n_samples):
-            row = ['%.16f' % (time_vector[i]/1000.0)]
-            for idx in sorted(signals.keys()):
-                row.append('%.16f' % signals[idx][i])
+            row = [f'{time_vector[i]/1000.0:.16f}']  # Convert ms to s
+            for key in signals.keys():
+                row.append(f'{signals[key][i]:.16f}')
             writer.writerow(row)
-
     
     print(f"\nData saved to: {output_path}\n")
 
