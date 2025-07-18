@@ -11,8 +11,9 @@ DEFAULT_OUTPUT_DIR = '/home/felipe/git-repos/MARTe2-WaterTank/DataVisualization/
 
 def get_arguments():
     parser = argparse.ArgumentParser(description='Export Mirnov coil data from SDAS to CSV.')
-    parser.add_argument('-p', help='Pulse (shot) number', default='46241')
+    parser.add_argument('-s', help='Shot number', default='46241')
     parser.add_argument('-o', help='Output CSV file path (optional)')
+    parser.add_argument('--dtype', help='Floating point type: float32 or float64', default='float64', choices=['float32', 'float64'])
     return parser.parse_args()
 
 def signal_name_dict():
@@ -32,7 +33,7 @@ def signal_name_dict():
     return signal_dict
 
 
-def LoadSdasData(client, channelID, shotnr):
+def LoadSdasData(client, channelID, shotnr, dtype):
     dataStruct = client.getData(channelID, '0x0000', shotnr)
     dataArray = dataStruct[0].getData()
     len_d = len(dataArray)
@@ -46,11 +47,11 @@ def LoadSdasData(client, channelID, shotnr):
     events = dataStruct[0].get('events')[0]
     tevent = TimeStamp(tstamp=events.get('tstamp'))
     delay = tstart.getTimeInMicros() - tevent.getTimeInMicros()
-    timeVector = np.linspace(delay / 1000.0, (delay + tbs * (len_d - 1)) / 1000.0, len_d)  # ms
+    timeVector = np.linspace(delay / 1000.0, (delay + tbs * (len_d - 1)) / 1000.0, len_d, dtype=dtype)  # ms
 
-    return np.array(dataArray), timeVector
+    return np.array(dataArray, dtype=dtype), timeVector
 
-def get_all_data(pulseNo, client=None):
+def get_all_data(pulseNo, dtype, client=None):
     if client is None:
         client = SDASClient(HOST, PORT)
     signalNames = signal_name_dict()
@@ -60,49 +61,58 @@ def get_all_data(pulseNo, client=None):
 
     for idx, (key, channel) in enumerate(signalNames.items()):
         print(f"Downloading {key}...")
-        signal_data, time = LoadSdasData(client, channel, int(pulseNo))
+        signal_data, time = LoadSdasData(client, channel, int(pulseNo), dtype)
         signals[idx] = signal_data
         if time_vector is None:
             time_vector = time
 
     return signals, time_vector
 
-def save_to_csv(signals: dict, time_vector: np.ndarray, output_path: str):
+def save_to_csv(signals: dict, time_vector: np.ndarray, output_path: str, dtype: str):
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
 
     with open(output_path, 'w', newline='') as csvfile:
         writer = csv.writer(csvfile, delimiter=',')
 
         # Header
-        header = ['#timeI (float64)[1]']
+        header = [f'#timeI ({dtype})[1]']
         for idx in sorted(signals.keys()):
             if idx < 12:
-                header.append(f'integ_ch{idx} (float64)[1]') # Mirnovs
+                header.append(f'integ_ch{idx} ({dtype})[1]') # Mirnovs
             elif 12 <= idx < 16:
-                header.append(f'integ_ch{idx} (float64)[1]') # Langmuirs
+                header.append(f'integ_ch{idx} ({dtype})[1]') # Langmuirs
             else:
-                header.append('rogowski_ch (float64)[1]') # Rogowski
+                header.append(f'rogowski_ch ({dtype})[1]') # Rogowski
         writer.writerow(header)
         
+        if dtype == 'float32':
+            precision = 8
+        else:  # float64
+            precision = 16
+            
         # Write data
         n_samples = len(time_vector)
         for i in range(n_samples):
-            row = [f'{time_vector[i]/1000.0:.16f}']  # Convert ms to s
+            row = [f'{time_vector[i]/1000.0:.{precision}f}']  # Convert to ms
             for key in signals.keys():
-                row.append(f'{signals[key][i]:.16f}')
+                row.append(f'{signals[key][i]:.{precision}f}')
             writer.writerow(row)
     
     print(f"\nData saved to: {output_path}\n")
 
 if __name__ == '__main__':
     args = get_arguments()
-    shot = args.p
+    shot = args.s
+    dtype = args.dtype
 
     if args.o:
         output_file = args.o
     else:
-        output_file = os.path.join(DEFAULT_OUTPUT_DIR, f"SDAS_shot_{shot}.csv")
+        if dtype == 'float32':
+            output_file = os.path.join(DEFAULT_OUTPUT_DIR, f"SDAS_shot_{shot}_float32.csv")
+        else:  # float64
+            output_file = os.path.join(DEFAULT_OUTPUT_DIR, f"SDAS_shot_{shot}.csv")
 
-    print(f"\nFetching data for shot #{shot}...\n")
-    signals, time_vector = get_all_data(shot)
-    save_to_csv(signals, time_vector, output_file)
+    print(f"\nFetching data for shot #{shot} with dtype {dtype}...\n")
+    signals, time_vector = get_all_data(shot, dtype)
+    save_to_csv(signals, time_vector, output_file, dtype)
