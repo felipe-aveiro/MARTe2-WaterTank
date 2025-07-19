@@ -53,7 +53,7 @@ namespace MARTe {
     const  uint32 EP_NUM_OUTPUTS = 2u;
 
 WaterTankGAM::WaterTankGAM() {
-    // Initialisation
+    // Initialization
     lastUsecTime  = 0.0;
     // Parameters
     lastHeight    = 0.0;
@@ -65,13 +65,18 @@ WaterTankGAM::WaterTankGAM() {
     // GAM Inputs
     usecTime = NULL_PTR(MARTe::uint32 *);
     pumpVoltageRequest = NULL_PTR(MARTe::float64*);
-    // Outputs
+    // GAM Outputs
     waterHeight = NULL_PTR(MARTe::float64 *);
     pumpVoltage = NULL_PTR(MARTe::float64 *);
 }
 
 WaterTankGAM::~WaterTankGAM() {
-
+    // GAM Inputs
+    usecTime = NULL_PTR(MARTe::uint32 *);
+    pumpVoltageRequest = NULL_PTR(MARTe::float64 *);
+    // GAM Outputs
+    waterHeight = NULL_PTR(MARTe::float64 *);
+    pumpVoltage = NULL_PTR(MARTe::float64 *);
 }
 
 bool WaterTankGAM::Initialise(MARTe::StructuredDataI & data) {
@@ -79,68 +84,76 @@ bool WaterTankGAM::Initialise(MARTe::StructuredDataI & data) {
     bool ok = GAM::Initialise(data);
     if (!ok) {
         REPORT_ERROR(ErrorManagement::ParametersError, "Could not Initialise the GAM");
+        return ok;
+    }
+    ok = data.MoveRelative("Parameters");
+    if (!ok) {
+        REPORT_ERROR(ErrorManagement::ParametersError, "The 'Parameters' node is missing in the configuration");
+        return ok;
     }
     if (ok) {
         ok = data.Read("InitialHeight", lastHeight);
         if (!ok) {
-            REPORT_ERROR(ErrorManagement::ParametersError, "The parameter InitialHeight shall be set");
+            REPORT_ERROR(ErrorManagement::ParametersError, "The parameter InitialHeight shall be set inside 'Parameters'");
+        } else {
+            REPORT_ERROR(ErrorManagement::Information, "Parameter InitialHeight set to %f", lastHeight);
         }
     }
-    if (ok) {
-        REPORT_ERROR(ErrorManagement::Information, "Parameter InitialHeight set to %f", lastHeight);
-    }
+
     if (ok) {
         ok = data.Read("InputFlowRate", bFlowRate);
         if (!ok) {
-            REPORT_ERROR(ErrorManagement::ParametersError, "The parameter InputFlowRate shall be set");
+            REPORT_ERROR(ErrorManagement::ParametersError, "The parameter InputFlowRate shall be set inside 'Parameters'");
+        } else {
+            REPORT_ERROR(ErrorManagement::Information, "Parameter InputFlowRate set to %f", bFlowRate);
         }
     }
-    if (ok) {
-        REPORT_ERROR(ErrorManagement::Information, "Parameter InputFlowRate set to %f", bFlowRate);
-    }
+
     if (ok) {
         ok = data.Read("OutputFlowRate", aFlowRate);
         if (!ok) {
-            REPORT_ERROR(ErrorManagement::ParametersError, "The parameter OutputFlowRate shall be set");
+            REPORT_ERROR(ErrorManagement::ParametersError, "The parameter OutputFlowRate shall be set inside 'Parameters'");
+        } else {
+            REPORT_ERROR(ErrorManagement::Information, "Parameter OutputFlowRate set to %f", aFlowRate);
         }
     }
-    if (ok) {
-        REPORT_ERROR(ErrorManagement::Information, "Parameter OutputFlowRate set to %f", aFlowRate);
-    }
+
     if (ok) {
         ok = data.Read("TankArea", tankArea);
         if (!ok) {
-            REPORT_ERROR(ErrorManagement::ParametersError, "The parameter TankArea shall be set");
+            REPORT_ERROR(ErrorManagement::ParametersError, "The parameter TankArea shall be set inside 'Parameters'");
+        } else {
+            REPORT_ERROR(ErrorManagement::Information, "Parameter TankArea set to %f", tankArea);
         }
     }
-    if (ok) {
-        REPORT_ERROR(ErrorManagement::Information, "Parameter TankArea set to %f", tankArea);
-    }
+
     if (ok) {
         ok = data.Read("MaxVoltage", maxVoltage);
         if (!ok) {
-            REPORT_ERROR(ErrorManagement::ParametersError, "The parameter MaxVoltage shall be set");
+            REPORT_ERROR(ErrorManagement::ParametersError, "The parameter MaxVoltage shall be set inside 'Parameters'");
+        } else {
+            REPORT_ERROR(ErrorManagement::Information, "Parameter MaxVoltage set to %f", maxVoltage);
         }
     }
-    if (ok) {
-        REPORT_ERROR(ErrorManagement::Information, "Parameter MaxVoltage set to %f", maxVoltage);
-    }
+
     if (ok) {
         ok = data.Read("MinVoltage", minVoltage);
         if (!ok) {
-            REPORT_ERROR(ErrorManagement::ParametersError, "The parameter MinVoltage shall be set");
-        }
-    }
-    if (ok) {
-        if (minVoltage < 0.0) {
-            REPORT_ERROR(ErrorManagement::Information,
-                        "MinVoltage cannot be negative due to physical constraints. "
-                        "The pump cannot extract water; therefore MinVoltage is set to 0.0.");
-            minVoltage = 0.0;
+            REPORT_ERROR(ErrorManagement::ParametersError, "The parameter MinVoltage shall be set inside 'Parameters'");
         } else {
-            REPORT_ERROR(ErrorManagement::Information, "Parameter MinVoltage set to %f", minVoltage);
+            if (minVoltage < 0.0) {
+                REPORT_ERROR(ErrorManagement::Information,
+                             "MinVoltage cannot be negative due to physical constraints. "
+                             "The pump cannot extract water; therefore MinVoltage is set to 0.0.");
+                minVoltage = 0.0;
+            } else {
+                REPORT_ERROR(ErrorManagement::Information, "Parameter MinVoltage set to %f", minVoltage);
+            }
         }
     }
+
+    data.MoveToAncestor(1u);
+    
     return ok;
 }
 
@@ -154,22 +167,21 @@ bool WaterTankGAM::Setup() {
                 "The number of input signals shall be equal to 2. numberOfInputSignals = %d ", numberOfInputSignals);
     }
     if (ok) {
-            StreamString inputSignalName;
-            ok = GetSignalName(InputSignals, 0u, inputSignalName);
             TypeDescriptor inputSignalType = GetSignalType(InputSignals, 0u);
             ok = (inputSignalType == UnsignedInteger32Bit);
             if (!ok) {
                 const char8 * const inputSignalTypeStr = TypeDescriptor::GetTypeNameFromTypeDescriptor(inputSignalType);
                 REPORT_ERROR(ErrorManagement::ParametersError,
-                        "The the UsecTime input signal type shall be uint32. inputSignalType = %s", inputSignalTypeStr);
+                        "The UsecTime input signal type shall be uint32. inputSignalType = %s", inputSignalTypeStr);
+                return ok;
             }
-            ok = GetSignalName(InputSignals, 1u, inputSignalName);
             inputSignalType = GetSignalType(InputSignals, 1u);
             ok = (inputSignalType == Float64Bit);
             if (!ok) {
                 const char8 * const inputSignalTypeStr = TypeDescriptor::GetTypeNameFromTypeDescriptor(inputSignalType);
                 REPORT_ERROR(ErrorManagement::ParametersError,
                         "The pumpVoltageRequest input signal type shall be float64. inputSignalType = %s", inputSignalTypeStr);
+                return ok;
             }
     }
 
@@ -186,22 +198,21 @@ bool WaterTankGAM::Setup() {
          REPORT_ERROR(ErrorManagement::ParametersError, "The number of output signals shall be equal to 2. numberOfOutputSignals = %d ", numberOfOutputSignals);
      }
      if (ok) {
-            StreamString outputSignalName;
-            ok = GetSignalName(OutputSignals, 0u, outputSignalName);
             TypeDescriptor outputSignalType = GetSignalType(OutputSignals, 0u);
             ok = (outputSignalType == Float64Bit);
             if (!ok) {
                 const char8 * const outputSignalTypeStr = TypeDescriptor::GetTypeNameFromTypeDescriptor(outputSignalType);
                 REPORT_ERROR(ErrorManagement::ParametersError,
                         "The the WaterHeight output signal type shall be float64. outputSignalType = %s", outputSignalTypeStr);
+                return ok;
             }
-            ok = GetSignalName(OutputSignals, 1u, outputSignalName);
             outputSignalType = GetSignalType(OutputSignals, 1u);
             ok = (outputSignalType == Float64Bit);
             if (!ok) {
                 const char8 * const outputSignalTypeStr = TypeDescriptor::GetTypeNameFromTypeDescriptor(outputSignalType);
                 REPORT_ERROR(ErrorManagement::ParametersError,
                         "The PumpVoltage output signal type shall be float64. outputSignalType = %s", outputSignalTypeStr);
+                return ok;
             }
     }
 
@@ -228,6 +239,7 @@ bool WaterTankGAM::Setup() {
             REPORT_ERROR(ErrorManagement::ParametersError,
                          "The number of input and output signals samples shall be equal to 1. numberOfInputSamples = %d | numberOfOutputSamples = %d",
                          numberOfInputSamples, numberOfOutputSamples);
+            ok = false;
         }
     }
     if (ok) {
@@ -247,6 +259,7 @@ bool WaterTankGAM::Setup() {
             REPORT_ERROR(ErrorManagement::ParametersError,
                          "The number of input and output signals dimensions shall be equal to 0. numberOfInputDimensions = %d | numberOfOutputDimensions = %d",
                          numberOfInputDimensions, numberOfOutputDimensions);
+            ok = false;
         }
     }
     if (ok) {
@@ -266,6 +279,7 @@ bool WaterTankGAM::Setup() {
             REPORT_ERROR(ErrorManagement::ParametersError,
                          "The number of input and output signals elements shall be equal to 1. numberOfInputElements = %d | numberOfOutputElements = %d",
                          numberOfInputElements, numberOfOutputElements);
+            ok = false;
         }
     }
 
