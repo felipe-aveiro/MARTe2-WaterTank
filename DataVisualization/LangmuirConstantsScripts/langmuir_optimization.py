@@ -34,5 +34,5 @@ weighted_coeffs = {
 # === 6. Print results ===
 print("\nFinal weighted coefficients (based on shot behavior quality):\n")
 for name, value in weighted_coeffs.items():
-    print(f"{name} = {value:.16e}")
+    print(f"{name} = (double) {value:.16e}")
 print()
