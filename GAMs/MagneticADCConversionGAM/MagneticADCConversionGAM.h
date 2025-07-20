@@ -25,8 +25,8 @@
  * $ make -C GAMs/MagneticADCConversionGAM -f Makefile.gcc
  */
 
-#ifndef EXAMPLES_CORE_FIXEDGAMEXAMPLE1_H_
-#define EXAMPLES_CORE_FIXEDGAMEXAMPLE1_H_
+#ifndef MAGNETICADCCONVERSIONGAM_H_
+#define MAGNETICADCCONVERSIONGAM_H_
 
 /*---------------------------------------------------------------------------*/
 /*                        Standard header includes                           */
@@ -41,96 +41,120 @@
 /*---------------------------------------------------------------------------*/
 /*                           Class declaration                               */
 /*---------------------------------------------------------------------------*/
-namespace MARTe2ISTTOK {
+
+namespace MARTe {
 /**
- * @brief An example of a GAM which has fixed inputs and outputs.
+ * @brief A GAM that converts integrated signals from Mirnov coils (ADC outputs in [V·s]) into magnetic fields [T].
  *
- * @details This GAM multiplies the input signal by a Gain.
- * The configuration syntax is (names and types are only given as an example):
+ * @details
+ * This GAM applies the following transformation for each coil:
+ * 
+ * B(t) = (ADC(t) * Gain * Pol / EffArea) * (faradaySign / CLOCK_FREQ * RT_DECIM)
  *
- * +GAMExample1 = {
- *     Class = FixedGAMExample1
- *     Gain = 5 //Compulsory
- *     InputSignals = {
- *         Signal1 = {
- *             DataSource = "DDB1"
- *             Type = uint32
- *         }
- *     }
- *     OutputSignals = {
- *         Signal1 = {
- *             DataSource = "DDB1"
- *             Type = uint32
- *         }
- *     }
- * }
- */
-class FixedGAMExample1 : public MARTe::GAM {
+ * Where:
+ *  - ADC(t): Input integrated signal from each coil [V·s]
+ *  - Gain: Calibration gain for the coil
+ *  - Pol: Polarity factor (1.0 or -1.0)
+ *  - EffArea: Effective coil area [m²]
+ *  - faradaySign: Constant (-1.0) from Faraday's law
+ *  - CLOCK_FREQ: Base sampling frequency of ADC system (10 kHz for ISTTOK)
+ *  - RT_DECIM: Real-time decimation factor (00 for ISTTOK)
+ *  - correctionCte = faradaySign / (CLOCK_FREQ * RT_DECIM)
+ *
+ * ### Key Features:
+ * - Real-time conversion of ADC integrated Mirnov coil signals to magnetic field values
+ * - Performs real-time processing for plasma control applications
+ * - Allows per-coil calibration parameters (EffArea, Pol, Gain)
+ * - Default values are applied if any parameter is missing
+ *
+ * ### Configuration Parameters:
+ * - For each coil (1 to 12):
+ *      - `EffArea`      [float64] : Effective coil area [m²]
+ *      - `Pol`          [float64] : Polarity (1.0 or -1.0)
+ *      - `Gain`         [float64] : Channel gain
+ *
+ * ### Configuration Example:
+* ```
+*       +MagneticADCConversionGAM = {
+*            Class = MagneticADCConversionGAM
+*            Coil1 = { EffArea = 2.793e-3 Gain = 17.3887e-6 Pol = -1 } // optional
+*            ...
+*            Coil12 = { EffArea = 2.442e-3 Gain = 17.4413e-6 Pol = 1 } // optional
+*            InputSignals = {
+*                AdcInteg0 = {DataSource = "DDB" Type = float32}
+*                ...
+*                AdcInteg11 = {DataSource = "DDB" Type = float32}
+*            }
+*            OutputSignals = {
+*                inputMirnov0 = {DataSource = "DDB" Type = float32}
+*                ...
+*                inputMirnov11 = {DataSource = "DDB" Type = float32}
+*            }
+*        }
+* ```
+*/
+
+class MagneticADCConversionGAM : public MARTe::GAM {
 public:
     CLASS_REGISTER_DECLARATION()
     /**
-     * @brief Constructor. NOOP.
+     * @brief Constructor. Initializes internal pointers and default values.
      */
-    FixedGAMExample1();
+    MagneticADCConversionGAM();
 
     /**
-     * @brief Destructor. NOOP.
+     * @brief Destructor. Clears all internal pointers.
      */
-    virtual ~FixedGAMExample1();
+    virtual ~MagneticADCConversionGAM();
 
     /**
-     * @brief Reads the Gain from the configuration file.
-     * @param[in] data see GAM::Initialise. The parameter Gain shall exist and will be read as an uint32.
-     * @return true if the parameter Gain can be read.
+     * @brief Reads configuration parameters and validates them.
+     * @details Verifies coil calibration parameters.
+     * @return true if all parameters are correctly initialized.
      */
     virtual bool Initialise(MARTe::StructuredDataI & data);
 
     /**
-     * @brief Verifies correctness of the GAM configuration.
-     * @details Checks that the number of input signals is equal to the number of output signals is equal to one and that the same type is used.
-     * @return true if the pre-conditions are met.
-     * @pre
-     *   SetConfiguredDatabase() &&
-     *   GetNumberOfInputSignals() == GetNumberOfOutputSignals() == 1 &&
-     *   GetSignalType(InputSignals, 0) == GetSignalType(OutputSignals, 0) == uint32 &&
-     *   GetSignalNumberOfDimensions(InputSignals, 0) == GetSignalNumberOfDimensions(OutputSignals, 0) == 0 &&
-     *   GetSignalNumberOfSamples(InputSignals, 0) == GetSignalNumberOfSamples(OutputSignals, 0) == 1 &&
-     *   GetSignalNumberOfElements(InputSignals, 0) == GetSignalNumberOfElements(OutputSignals, 0) == 1
+     * @brief Checks signal structure consistency.
+     * @details Ensures that the number of input/output signals equals NUM_SIGNALS = 12u
+     * and validates samples, elements, and dimensions (must be 1, 1, 0 respectively).
+     * @return true if all conditions are satisfied.
      */
     virtual bool Setup();
 
     /**
-     * @brief Multiplies the input signal by the Gain.
-     * @return true.
+     * @brief Converts ADC integrated signals to magnetic fields.
+     * @details Applies the conversion formula using coil-specific calibration.
      */
     virtual bool Execute();
 
     /**
-     * @brief Export information about the component
+     * @brief Exports GAM parameters back to configuration tree.
      */
     virtual bool ExportData(MARTe::StructuredDataI & data);
 
 private:
 
     /**
-     * The input signal
+     * The input signals holder
      */
-    MARTe::uint32 *inputSignal;
-
+    MARTe::float32 *inputSignals[12u];
     /**
-     * The output signal
+     * The output signals holder
      */
-    MARTe::uint32 *outputSignal;
+    MARTe::float32 *outputSignals[12u];
+    
+    /** Coil parameters */
+    MARTe::float64 EffArea[12u];
+    MARTe::float64 Pol[12u];
+    MARTe::float64 Gain[12u];
+    MARTe::float32 MagFieldConv[12u];
 
-    /**
-     * The configured gain.
-     */
-    MARTe::uint32 gain;
 };
 }
 /*---------------------------------------------------------------------------*/
 /*                        Inline method definitions                          */
 /*---------------------------------------------------------------------------*/
 
-#endif /* EXAMPLES_CORE_FIXEDGAMEXAMPLE1_H_ */
+#endif /* MAGNETICADCCONVERSIONGAM_H_ */
 
