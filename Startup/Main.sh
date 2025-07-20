@@ -24,6 +24,8 @@ export MARTe2_Demos_DIR=$MARTe_DIR/MARTe2-demos-padova
 
 LD_LIBRARY_PATH=$LD_LIBRARY_PATH:../Build/x86-linux/Components/GAMs/WaterTankGAM/
 LD_LIBRARY_PATH=$LD_LIBRARY_PATH:../Build/x86-linux/Components/GAMs/MagneticRZPosGAM/
+LD_LIBRARY_PATH=$LD_LIBRARY_PATH:../Build/x86-linux/Components/GAMs/MagneticADCConversionGAM/
+LD_LIBRARY_PATH=$LD_LIBRARY_PATH:../Build/x86-linux/Components/GAMs/MagneticArrayADCConversionGAM/
 LD_LIBRARY_PATH=$LD_LIBRARY_PATH:../Build/x86-linux/Components/DataSources/UARTOutput
 LD_LIBRARY_PATH=$LD_LIBRARY_PATH:../MatlabLibs/
 
