@@ -37,12 +37,23 @@ required_cols = [
 ]
 df.dropna(subset=required_cols, inplace=True)
 
-# Remove outliers by standard deviation limit
-z_thresh = 2.5  # Tolerance (in standard deviations)
-for col in ['outputMpR (float64)[1]', 'outputMpZ (float64)[1]']:
-    mean = df[col].mean()
-    std = df[col].std()
-    df = df[np.abs(df[col] - mean) < z_thresh * std]
+# Remove outliers based on physical constraints
+
+a = 0.085
+R_center = 0.46
+R_lower, R_upper = R_center - a, R_center + a
+
+Z_center = 0.0
+Z_lower, Z_upper = Z_center - a, Z_center + a
+
+# === Apply filtering based on z-threshold derived from physical constraints ===
+before_count = len(df)
+df = df[
+    (df['outputMpR (float64)[1]'] >= R_lower) & (df['outputMpR (float64)[1]'] <= R_upper) &
+    (df['outputMpZ (float64)[1]'] >= Z_lower) & (df['outputMpZ (float64)[1]'] <= Z_upper)
+]
+after_count = len(df)
+print(f"[INFO] Removed {before_count - after_count} rows outside physical limits.")
 
 # Extract time (if available)
 time = df['#timeI (float64)[1]'].values * 1e3 if '#timeI (float64)[1]' in df.columns else np.arange(len(df))
