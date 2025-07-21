@@ -62,13 +62,13 @@ dtype = "float32" if "Atca" in csv_filename else "float64"
 # === Check available columns for reconstructions ===
 options_map = {}
 if f"outputMpR ({dtype})[1]" in df.columns and f"outputMpZ ({dtype})[1]" in df.columns:
-    options_map["Magnetic Reconstruction (Mirnov)"] = (
+    options_map["Magnetic Reconstruction"] = (
         df[f"outputMpR ({dtype})[1]"].values,
         df[f"outputMpZ ({dtype})[1]"].values
     )
 
 if f"outputEpR ({dtype})[1]" in df.columns and f"outputEpZ ({dtype})[1]" in df.columns:
-    options_map["Electric Reconstruction (Langmuir)"] = (
+    options_map["Electric Reconstruction"] = (
         df[f"outputEpR ({dtype})[1]"].values,
         df[f"outputEpZ ({dtype})[1]"].values
     )
@@ -111,8 +111,8 @@ radial_recon, vertical_recon = options_map[selected_option]
 
 # === Color mapping based on selected option ===
 color_map = {
-    "Magnetic Reconstruction (Mirnov)": ('m', "Magnetic Coils"),
-    "Electric Reconstruction (Langmuir)": ('g', "Electric Probes"),
+    "Magnetic Reconstruction": ('m', "Mirnov Coils"),
+    "Electric Reconstruction": ('g', "Langmuir Probes"),
     "Fused Reconstruction": ('b', "Fused State")
 }
 
@@ -127,6 +127,7 @@ win.setCentralWidget(central_widget)
 
 plot_widget = pg.GraphicsLayoutWidget()
 layout.addWidget(plot_widget)
+plot_widget.setFixedSize(1200, 600)
 
 # === Fonts ===
 title_font = QtGui.QFont("Arial", 14, QtGui.QFont.Bold)
@@ -140,7 +141,7 @@ plot_r.setLabel("left", "R [m]")
 plot_r.getAxis("bottom").label.setFont(axis_font)
 plot_r.getAxis("left").label.setFont(axis_font)
 legend_r = plot_r.addLegend()
-legend_r.setLabelTextSize("14pt")
+#legend_r.setLabelTextSize("14pt")
 plot_r.showGrid(x=True, y=True)
 
 # === Vertical plot ===
@@ -151,8 +152,8 @@ plot_z.setLabel("bottom", "Time [ms]")
 plot_z.setLabel("left", "Z [m]")
 plot_z.getAxis("bottom").label.setFont(axis_font)
 plot_z.getAxis("left").label.setFont(axis_font)
-legend_z = plot_z.addLegend()
-legend_z.setLabelTextSize("14pt")
+#legend_z = plot_z.addLegend()
+#legend_z.setLabelTextSize("14pt")
 plot_z.showGrid(x=True, y=True)
 
 # === Add curves ===
@@ -167,7 +168,6 @@ plot_r.addItem(zero_lineR_upper)
 plot_r.addItem(zero_lineR_lower)
 
 plot_r.plot(sdas_time, radial_dom + 0.46, pen=pg.mkPen('y', width=2), name="Reference")
-plot_z.plot(sdas_time, vertical_dom, pen=pg.mkPen('y', width=2), name="Reference")
 
 zero_lineZ_center = pg.InfiniteLine(pos=0, angle=0, pen=pg.mkPen('w', width=1, style=QtCore.Qt.DashLine))
 zero_lineZ_upper = pg.InfiniteLine(pos=0.085, angle=0, pen=pg.mkPen('r', width=2, style=QtCore.Qt.DotLine))
@@ -175,13 +175,17 @@ zero_lineZ_lower = pg.InfiniteLine(pos=-0.085, angle=0, pen=pg.mkPen('r', width=
 plot_z.addItem(zero_lineZ_center)
 plot_z.addItem(zero_lineZ_upper)
 plot_z.addItem(zero_lineZ_lower)
+               
+plot_z.plot(sdas_time, vertical_dom, pen=pg.mkPen('y', width=2), name="Reference")
 
 plot_r.setYRange(0.46 - 0.1, 0.46 + 0.1)
 plot_z.setYRange(-0.1,0.1)
 time_min = max(csv_time.min(), sdas_time.min())
 time_max = min(csv_time.max(), sdas_time.max())
-plot_r.setXRange(time_min, time_max)
-plot_z.setXRange(time_min, time_max)
+#plot_r.setXRange(time_min, time_max, padding=0)
+#plot_z.setXRange(time_min, time_max, padding=0)
+plot_r.setXRange(160, 400, padding=0)
+plot_z.setXRange(160, 400, padding=0)
 plot_r.setLimits(xMin=time_min, xMax=time_max)
 plot_z.setLimits(xMin=time_min, xMax=time_max)
 
