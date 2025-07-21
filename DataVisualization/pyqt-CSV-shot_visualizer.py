@@ -14,6 +14,7 @@ all_annotations = {}
 all_markers = {}
 selected_points = {}
 active_plot = None
+custom_legend_items = []
 
 def clear_selection(plot):
     if plot in all_annotations:
@@ -194,7 +195,7 @@ main_layout.addLayout(button_layout)
 plot_widget = pg.GraphicsLayoutWidget()
 
 # === TEMPORARY SIZE FOR EXPORT PREVIEW ========================================================================
-#plot_widget.setFixedSize(800, 400)
+#plot_widget.setFixedSize(1200,400)
 # === REMOVE AFTER EXTRACTING RELEVANT PLOTS ===================================================================
 
 main_layout.addWidget(plot_widget, stretch=1)
@@ -202,6 +203,11 @@ main_layout.addWidget(plot_widget, stretch=1)
 def show_main_plots():
     save_current_xrange()
     plot_widget.clear()
+    global custom_legend_items
+    for item in custom_legend_items:
+        item.setParentItem(None)
+    custom_legend_items = []
+
     global plot1, plot2, plot3
 
     export3_btn.hide()
@@ -220,9 +226,8 @@ def show_main_plots():
     bold_font = QtGui.QFont("Arial", 11, QtGui.QFont.Bold)
     plot1.getAxis("bottom").label.setFont(bold_font)
     plot1.getAxis("left").label.setFont(bold_font)
-    plot1.addLegend()
-    #plot1.setXRange(time_min, time_max, padding=0)
-    plot1.setXRange(160, 400, padding=0)
+    plot1.setXRange(time_min, time_max, padding=0)
+    #plot1.setXRange(260, 500, padding=0)
     plot1.setLimits(xMin=time_min, xMax=time_max)
     plot1.setAutoVisible(y=True)
     zero_line1 = pg.InfiniteLine(pos=0, angle=0, pen=pg.mkPen('w', width=1, style=QtCore.Qt.DashLine))
@@ -235,15 +240,41 @@ def show_main_plots():
         (255, 0, 128), (0, 255, 128), (128, 128, 0)
     ]
 
+    x_offset = 100
+    y_offset_top = 30
+    y_offset_bottom = 50
+    spacing = 80
+    items_per_row = 6
+    legend_font = QtGui.QFont("Arial", 10)
+    
     for i, (col, color) in enumerate(zip(mirnov_cols, colors)):
         y = df_filtered[col].values
         coil_name = f"Coil {i+1}"
-        plot1.plot(time, y, pen=pg.mkPen(color=color, width=1), name=coil_name)
+        curve = plot1.plot(time, y, pen=pg.mkPen(color=color, width=1), name=coil_name)
+        row = 0 if i < items_per_row else 1
+        col_index = i if i < items_per_row else i - items_per_row
+
+        legend_y = y_offset_top if row == 0 else y_offset_bottom
+        legend_x = x_offset + col_index * spacing
+
+        sample = pg.graphicsItems.LegendItem.ItemSample(curve)
+        sample.setParentItem(plot1.graphicsItem())
+        sample.setPos(legend_x, legend_y)
+        custom_legend_items.append(sample)
+
+        text = pg.TextItem(coil_name, anchor=(0, 0), color='w')
+        text.setFont(legend_font)
+        text.setParentItem(plot1.graphicsItem())
+        text.setPos(legend_x + 25, legend_y)
+        custom_legend_items.append(text)
 
     """plot_widget.nextRow()
     plot2 = plot_widget.addPlot(title="Time Evolution of Plasma Current reconstructed from Mirnov Coils Measurements")
+    plot2.titleLabel.item.setFont(QtGui.QFont("Arial", 14, QtGui.QFont.Bold))
     plot2.setLabel('bottom', 'Time [ms]')
     plot2.setLabel('left', 'Current [A]')
+    plot2.getAxis("bottom").label.setFont(bold_font)
+    plot2.getAxis("left").label.setFont(bold_font)
     plot2.setXRange(time_min, time_max, padding=0)
     plot2.setLimits(xMin=time_min, xMax=time_max)
     plot2.setAutoVisible(y=True)
@@ -262,6 +293,8 @@ def show_main_plots():
         plot3 = plot_widget.addPlot()
         plot3.setLabel('bottom', 'Time [ms]')
         plot3.setLabel('left', 'Trigger')
+        plot3.getAxis("bottom").label.setFont(bold_font)
+        plot3.getAxis("left").label.setFont(bold_font)
         plot3.setXRange(chopper_time.min(), chopper_time.max(), padding=0)
         plot3.setLimits(xMin=chopper_time.min(), xMax=chopper_time.max())
         plot3.setYRange(0, 3)
