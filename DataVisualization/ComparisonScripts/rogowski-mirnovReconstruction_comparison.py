@@ -84,7 +84,8 @@ def plot_currents(csv_time, csv_current, sdas_time, sdas_current):
     legend = plot.addLegend()
     legend.setLabelTextSize("11pt")
     plot.setXRange(160, 400, padding=0)
-    plot.setLimits(xMin=csv_time_aligned.min(), xMax=csv_time_aligned.max())
+    plot.setYRange(-5000, 5000, padding=0)
+    plot.setLimits(xMin=csv_time_aligned.min(), xMax=csv_time_aligned.max(), yMin=-5000, yMax=5000)
     plot.showGrid(x=True, y=True)
     
     # === Adjust fonts  ===
