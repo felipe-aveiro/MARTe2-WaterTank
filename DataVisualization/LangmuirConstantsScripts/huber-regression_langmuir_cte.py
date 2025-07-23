@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 from sklearn.linear_model import HuberRegressor
 from sklearn.metrics import mean_squared_error, r2_score
-from pyqtgraph.Qt import QtWidgets, QtCore
+from pyqtgraph.Qt import QtWidgets, QtCore, QtGui
 import pyqtgraph as pg
 import sys
 import os
@@ -36,7 +36,7 @@ required_cols = [
     'outputMpZ (float64)[1]'
 ]
 df.dropna(subset=required_cols, inplace=True)
-
+    
 # Remove outliers based on physical constraints
 
 a = 0.085
@@ -70,9 +70,9 @@ y_R = df['outputMpR (float64)[1]']
 X_Z = df[['deltaZ']]
 y_Z = df['outputMpZ (float64)[1]']
 
-# === 5. Fit robust linear models with HuberRegressor ===
-model_R = HuberRegressor(epsilon=1.35).fit(X_R.values.reshape(-1, 1), y_R.values)
-model_Z = HuberRegressor(epsilon=1.35).fit(X_Z.values.reshape(-1, 1), y_Z.values)
+# === 5. Fit robust linear models with HuberRegressor (NO alpha) ===
+model_R = HuberRegressor(epsilon=1.3).fit(X_R.values.reshape(-1, 1), y_R.values)
+model_Z = HuberRegressor(epsilon=1.3).fit(X_Z.values.reshape(-1, 1), y_Z.values)
 
 # === 6. Coefficients ===
 C1, C2 = model_R.coef_[0], model_R.intercept_
@@ -100,49 +100,107 @@ win.resize(1000, 600)
 win.showMaximized()
 win.keyPressEvent = lambda event: app.quit() if event.key() == QtCore.Qt.Key_Escape else None
 
-# Radial plot
-p1 = win.addPlot(title="Radial Position Comparison")
-curve1 = p1.plot(time, y_R.values, pen='b', name='Mirnov Coils')
-curve2 = p1.plot(time, y_R_pred, pen=pg.mkPen('g', style=pg.QtCore.Qt.DashLine), name='Langmuir Probes')
-legend1 = pg.LegendItem(offset=(60, 10))
-legend1.setParentItem(p1.graphicsItem())
-legend1.addItem(curve1, 'Mirnov Coils')
-legend1.addItem(curve2, 'Langmuir Probes')
-p1.setLabel('left', 'Radial Position')
-p1.setLabel('bottom', 'Time (ms)')
-p1.setXRange(time_min, time_max, padding=0)
-p1.setLimits(xMin=time_min, xMax=time_max)
-p1.setYRange(0.46-0.1, 0.46+0.1)
+# === Plot 1: Radial ===
+plot_r = win.addPlot(title="Radial Position Comparison")
+plot_r.setLabel('bottom', 'Time [ms]')
+plot_r.setLabel('left', 'R [m]')
+plot_r.setXRange(time_min, time_max, padding=0)
+plot_r.setLimits(xMin=time_min, xMax=time_max)
+plot_r.setYRange(0.46-0.1, 0.46+0.1)
+
 zero_lineR_center = pg.InfiniteLine(pos=0.46, angle=0, pen=pg.mkPen('w', width=1, style=QtCore.Qt.DashLine))
 zero_lineR_upper = pg.InfiniteLine(pos=0.46+0.085, angle=0, pen=pg.mkPen('r', width=2, style=QtCore.Qt.DotLine))
 zero_lineR_lower = pg.InfiniteLine(pos=0.46-0.085, angle=0, pen=pg.mkPen('r', width=2, style=QtCore.Qt.DotLine))
-p1.addItem(zero_lineR_center)
-p1.addItem(zero_lineR_upper)
-p1.addItem(zero_lineR_lower)
+plot_r.addItem(zero_lineR_center)
+plot_r.addItem(zero_lineR_upper)
+plot_r.addItem(zero_lineR_lower)
 
-# Vertical plot
+curves_r = [
+    (plot_r.plot(time, y_R.values, pen=pg.mkPen('c', width=2), name='Mirnov Coils'), "Mirnov Coils"),
+    (plot_r.plot(time, y_R_pred, pen=pg.mkPen('y', width=2, style=QtCore.Qt.DashLine), name='Langmuir Probes'), "Langmuir Fit")
+]
+
+# === Plot 2: Vertical ===
 win.nextRow()
-p2 = win.addPlot(title="Vertical Position Comparison")
-curve3 = p2.plot(time, y_Z.values, pen='b', name='Mirnov Coils')
-curve4 = p2.plot(time, y_Z_pred, pen=pg.mkPen('g', style=pg.QtCore.Qt.DashLine), name='Langmuir Probes')
-legend2 = pg.LegendItem(offset=(60, 10))
-legend2.setParentItem(p2.graphicsItem())
-legend2.addItem(curve3, 'Mirnov Coils')
-legend2.addItem(curve4, 'Langmuir Probes')
-p2.setLabel('left', 'Vertical Position')
-p2.setLabel('bottom', 'Time (ms)')
-p2.setXRange(time_min, time_max, padding=0)
-p2.setLimits(xMin=time_min, xMax=time_max)
-p2.setYRange(-0.1, 0.1)
+plot_z = win.addPlot(title="Vertical Position Comparison")
+plot_z.setLabel('bottom', 'Time [ms]')
+plot_z.setLabel('left', 'Z [m]')
+plot_z.setXRange(time_min, time_max, padding=0)
+plot_z.setLimits(xMin=time_min, xMax=time_max)
+plot_z.setYRange(-0.1, 0.1)
+
 zero_lineZ_center = pg.InfiniteLine(pos=0, angle=0, pen=pg.mkPen('w', width=1, style=QtCore.Qt.DashLine))
 zero_lineZ_upper = pg.InfiniteLine(pos=0.085, angle=0, pen=pg.mkPen('r', width=2, style=QtCore.Qt.DotLine))
 zero_lineZ_lower = pg.InfiniteLine(pos=-0.085, angle=0, pen=pg.mkPen('r', width=2, style=QtCore.Qt.DotLine))
-p2.addItem(zero_lineZ_center)
-p2.addItem(zero_lineZ_upper)
-p2.addItem(zero_lineZ_lower)
+plot_z.addItem(zero_lineZ_center)
+plot_z.addItem(zero_lineZ_upper)
+plot_z.addItem(zero_lineZ_lower)
 
+curves_z = [
+    (plot_z.plot(time, y_Z.values, pen=pg.mkPen('m', width=2), name='Mirnov Coils'), "Mirnov Coils"),
+    (plot_z.plot(time, y_Z_pred, pen=pg.mkPen('g', width=2, style=QtCore.Qt.DashLine), name='Langmuir Probes'), "Langmuir Fit")
+]
+
+# === Custom Legends ===
+custom_legend_items = []
+x_offset = 100
+y_offset = 30
+spacing = 150
+legend_font = QtGui.QFont("Arial", 10)
+
+for i, (curve, label) in enumerate(curves_r):
+    sample = pg.graphicsItems.LegendItem.ItemSample(curve)
+    sample.setParentItem(plot_r.graphicsItem())
+    legend_x = x_offset + i * spacing
+    sample.setPos(legend_x, y_offset)
+    custom_legend_items.append(sample)
+
+    text = pg.TextItem(label, anchor=(0, 0), color='w')
+    text.setFont(legend_font)
+    text.setParentItem(plot_r.graphicsItem())
+    text.setPos(legend_x + 25, y_offset)
+    custom_legend_items.append(text)
+
+for i, (curve, label) in enumerate(curves_z):
+    sample = pg.graphicsItems.LegendItem.ItemSample(curve)
+    sample.setParentItem(plot_z.graphicsItem())
+    legend_x = x_offset + i * spacing
+    sample.setPos(legend_x, y_offset)
+    custom_legend_items.append(sample)
+
+    text = pg.TextItem(label, anchor=(0, 0), color='w')
+    text.setFont(legend_font)
+    text.setParentItem(plot_z.graphicsItem())
+    text.setPos(legend_x + 25, y_offset)
+    custom_legend_items.append(text)
+
+# === Link X-axis and Sync Y ===
+plot_r.setXLink(plot_z)
+def sync_y_range(source_plot, target_plot, offset):
+    if not target_plot.vb:
+        return
+    source_ymin, source_ymax = source_plot.vb.viewRange()[1]
+    source_center = (source_ymin + source_ymax) / 2
+    source_size = source_ymax - source_ymin
+    target_center = source_center + offset
+    new_target_range = (
+        target_center - source_size / 2,
+        target_center + source_size / 2
+    )
+    target_plot.vb.blockSignals(True)
+    target_plot.vb.setYRange(*new_target_range, padding=0)
+    target_plot.vb.blockSignals(False)
+
+r_center = (plot_r.vb.viewRange()[1][0] + plot_r.vb.viewRange()[1][1]) / 2
+z_center = (plot_z.vb.viewRange()[1][0] + plot_z.vb.viewRange()[1][1]) / 2
+offset_r_to_z = z_center - r_center
+offset_z_to_r = r_center - z_center
+
+plot_r.vb.sigYRangeChanged.connect(lambda: sync_y_range(plot_r, plot_z, offset_r_to_z))
+plot_z.vb.sigYRangeChanged.connect(lambda: sync_y_range(plot_z, plot_r, offset_z_to_r))
+
+# === Save Coefficients ===
 output_file = '/home/felipe/git-repos/MARTe2-WaterTank/DataVisualization/Outputs/langmuir_coeficients.csv'
-
 shot_name = os.path.basename(file_path)
 shot_number = ''.join(filter(str.isdigit, os.path.splitext(shot_name)[0]))
 
@@ -161,18 +219,17 @@ row_data = {
 # Update or create coefficients file
 if os.path.exists(output_file):
     df_log = pd.read_csv(output_file)
+    
     # Remove old entries for the same shot
     df_log['Shot'] = df_log['Shot'].astype(str)
     df_log = df_log[df_log['Shot'] != str(shot_number)]
-
+    
     # Add new entry
     df_log = pd.concat([df_log, pd.DataFrame([row_data])], ignore_index=True)
 else:
     df_log = pd.DataFrame([row_data])
-
 # Save updated file
 df_log.to_csv(output_file, index=False)
-
 print(f"\nExported coefficients to: {output_file}\n")
 
 if __name__ == '__main__':
