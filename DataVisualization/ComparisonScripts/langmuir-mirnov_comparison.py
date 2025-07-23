@@ -73,16 +73,19 @@ central_widget.setLayout(main_layout)
 main_window.setCentralWidget(central_widget)
 
 button_layout = QtWidgets.QHBoxLayout()
-export1_btn = QtWidgets.QPushButton("Export Langmuir Comparison Plot")
-button_layout.addWidget(export1_btn)
+export_r_btn = QtWidgets.QPushButton("Export Langmuir Comparison Radial Plot")
+export_z_btn = QtWidgets.QPushButton("Export Langmuir Comparison Vertical Plot")
+button_layout.addWidget(export_r_btn)
+button_layout.addWidget(export_z_btn)
 main_layout.addLayout(button_layout)
 
 plot_widget = pg.GraphicsLayoutWidget()
 # === TEMPORARY SIZE FOR EXPORT PREVIEW ========================================================================
-plot_widget.setFixedSize(1000,500)
+plot_widget.setFixedSize(800,400)
 # === REMOVE AFTER EXTRACTING RELEVANT PLOTS ===================================================================
 main_layout.addWidget(plot_widget)
-export1_btn.show()
+export_r_btn.show()
+export_z_btn.show()
 
 bold_font = QtGui.QFont("Arial", 11, QtGui.QFont.Bold)
 
@@ -203,7 +206,7 @@ offset_z_to_r = r_center - z_center
 plot_r.vb.sigYRangeChanged.connect(lambda: sync_y_range(plot_r, plot_z, offset_r_to_z))
 plot_z.vb.sigYRangeChanged.connect(lambda: sync_y_range(plot_z, plot_r, offset_z_to_r))
 
-def export_plot_with_dialog(suggested_name):
+def export_plot_with_dialog(suggested_name, target):
     options = QtWidgets.QFileDialog.Options()
     file_path, _ = QtWidgets.QFileDialog.getSaveFileName(
         main_window,
@@ -213,12 +216,13 @@ def export_plot_with_dialog(suggested_name):
         options=options
     )
     if file_path:
-        exporter = ImageExporter(plot_widget.scene())
+        exporter = ImageExporter(target)
         exporter.export(file_path)
 
 suffix = "_float32" if use_float32 else ""
 
-export1_btn.clicked.connect(lambda: export_plot_with_dialog(f"langmuir_comparison_plot_shot_{shot_number}{suffix}.png"))
+export_r_btn.clicked.connect(lambda: export_plot_with_dialog(f"langmuir_comparison_radial_plot_shot_{shot_number}{suffix}.png", plot_r))
+export_z_btn.clicked.connect(lambda: export_plot_with_dialog(f"langmuir_comparison_vertical_plot_shot_{shot_number}{suffix}.png", plot_z))
 
 # === Show window and run ===
 main_window.showMaximized()
