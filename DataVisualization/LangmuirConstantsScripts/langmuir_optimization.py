@@ -31,8 +31,14 @@ weighted_coeffs = {
     for name in coeff_names
 }
 
-# === 6. Print results ===
+# === 6. Weighted global RMSE for R and Z ===
+weighted_RMSE_R = (df_filtered['RMSE_R'] * df_filtered['Weight']).sum() / total_weight
+weighted_RMSE_Z = (df_filtered['RMSE_Z'] * df_filtered['Weight']).sum() / total_weight
+
+# === 7. Print results ===
 print("\nFinal weighted coefficients (based on shot behavior quality):\n")
 for name, value in weighted_coeffs.items():
-    print(f"{name} = (double) {value:.16e}")
-print()
+    print(f"{name} = (float64) {value:.16e}")
+print("\nWeighted Global RMSE:\n")
+print(f"RMSE_R: {weighted_RMSE_R:.6f}")
+print(f"RMSE_Z: {weighted_RMSE_Z:.6f}")
