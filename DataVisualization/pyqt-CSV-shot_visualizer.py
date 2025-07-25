@@ -15,6 +15,7 @@ all_markers = {}
 selected_points = {}
 active_plot = None
 custom_legend_items = []
+custom_legend_items_pos = []
 
 def clear_selection(plot):
     if plot in all_annotations:
@@ -195,7 +196,7 @@ main_layout.addLayout(button_layout)
 plot_widget = pg.GraphicsLayoutWidget()
 
 # === TEMPORARY SIZE FOR EXPORT PREVIEW ========================================================================
-#plot_widget.setFixedSize(1200,400)
+plot_widget.setFixedSize(1000,350) # (800, 400) for position plots
 # === REMOVE AFTER EXTRACTING RELEVANT PLOTS ===================================================================
 
 main_layout.addWidget(plot_widget, stretch=1)
@@ -226,8 +227,8 @@ def show_main_plots():
     bold_font = QtGui.QFont("Arial", 11, QtGui.QFont.Bold)
     plot1.getAxis("bottom").label.setFont(bold_font)
     plot1.getAxis("left").label.setFont(bold_font)
-    plot1.setXRange(time_min, time_max, padding=0)
-    #plot1.setXRange(260, 500, padding=0)
+    #plot1.setXRange(time_min, time_max, padding=0)
+    plot1.setXRange(160, 400, padding=0) # (160, 400) for SDAS data and (260, 500) for MDS data
     plot1.setLimits(xMin=time_min, xMax=time_max)
     plot1.setAutoVisible(y=True)
     zero_line1 = pg.InfiniteLine(pos=0, angle=0, pen=pg.mkPen('w', width=1, style=QtCore.Qt.DashLine))
@@ -240,7 +241,7 @@ def show_main_plots():
         (255, 0, 128), (0, 255, 128), (128, 128, 0)
     ]
 
-    x_offset = 100
+    x_offset = 500
     y_offset_top = 30
     y_offset_bottom = 50
     spacing = 80
@@ -262,7 +263,7 @@ def show_main_plots():
         sample.setPos(legend_x, legend_y)
         custom_legend_items.append(sample)
 
-        text = pg.TextItem(coil_name, anchor=(0, 0), color='w')
+        text = pg.TextItem(coil_name, anchor=(0, 0), color='gray')
         text.setFont(legend_font)
         text.setParentItem(plot1.graphicsItem())
         text.setPos(legend_x + 25, legend_y)
@@ -310,6 +311,11 @@ def show_mprz_plots():
     save_current_xrange()
     plot_widget.clear()
     
+    global custom_legend_items_pos
+    for item in custom_legend_items_pos:
+        item.setParentItem(None)
+    custom_legend_items_pos = []
+    
     export1_btn.hide()
     export2_btn.hide()
     export5_btn.hide()
@@ -319,44 +325,80 @@ def show_mprz_plots():
     export3_btn.show()
     export4_btn.show()
 
-    plot4 = plot_widget.addPlot(title="Time Evolution of Plasma Radial Position Estimated from Mirnov Coil Measurements")
+    plot4 = plot_widget.addPlot(title="Time Evolution of Plasma Positions Estimated from Mirnov Coil Measurements")
     plot4.titleLabel.item.setFont(QtGui.QFont("Arial", 14, QtGui.QFont.Bold))
     plot4.setLabel('bottom', 'Time [ms]')
-    plot4.setLabel('left', 'Position [m]')
+    plot4.setLabel('left', 'R [m]')
     bold_font = QtGui.QFont("Arial", 11, QtGui.QFont.Bold)
     plot4.getAxis("bottom").label.setFont(bold_font)
     plot4.getAxis("left").label.setFont(bold_font)
     plot4.setXRange(160, 400, padding=0)
     plot4.setLimits(xMin=time_min, xMax=time_max)
     plot4.setYRange(0.46-0.1, 0.46+0.1)
+    
+    # Add reference lines
     zero_lineR_center = pg.InfiniteLine(pos=0.46, angle=0, pen=pg.mkPen('w', width=1, style=QtCore.Qt.DashLine))
     zero_lineR_upper = pg.InfiniteLine(pos=0.46+0.085, angle=0, pen=pg.mkPen('r', width=2, style=QtCore.Qt.DotLine))
     zero_lineR_lower = pg.InfiniteLine(pos=0.46-0.085, angle=0, pen=pg.mkPen('r', width=2, style=QtCore.Qt.DotLine))
     plot4.addItem(zero_lineR_center)
     plot4.addItem(zero_lineR_upper)
     plot4.addItem(zero_lineR_lower)
-    plot4.plot(time, df_filtered[mpr_col].values, pen='c')
+    
+    # === Radial position ===
+    pos_r = plot4.plot(time, df_filtered[mpr_col].values, pen='c')
     setup_clickable_plot(plot4, "R", "m")
 
     plot_widget.nextRow()
-    plot5 = plot_widget.addPlot(title="Time Evolution of Plasma Vertical Position Estimated from Mirnov Coil Measurements")
-    plot5.titleLabel.item.setFont(QtGui.QFont("Arial", 14, QtGui.QFont.Bold))
+    
+    # === Vertical position ===
+    plot5 = plot_widget.addPlot(title="")
     plot5.setLabel('bottom', 'Time [ms]')
-    plot5.setLabel('left', 'Position [m]')
+    plot5.setLabel('left', 'Z [m]')
     plot5.getAxis("bottom").label.setFont(bold_font)
     plot5.getAxis("left").label.setFont(bold_font)
     plot5.setXRange(160, 400, padding=0)
     plot5.setLimits(xMin=time_min, xMax=time_max)
     plot5.setYRange(-0.1, 0.1)
+    
+    # Add reference lines
     zero_lineZ_center = pg.InfiniteLine(pos=0, angle=0, pen=pg.mkPen('w', width=1, style=QtCore.Qt.DashLine))
     zero_lineZ_upper = pg.InfiniteLine(pos=0.085, angle=0, pen=pg.mkPen('r', width=2, style=QtCore.Qt.DotLine))
     zero_lineZ_lower = pg.InfiniteLine(pos=-0.085, angle=0, pen=pg.mkPen('r', width=2, style=QtCore.Qt.DotLine))
     plot5.addItem(zero_lineZ_center)
     plot5.addItem(zero_lineZ_upper)
     plot5.addItem(zero_lineZ_lower)
-    plot5.plot(time, df_filtered[mpz_col].values, pen='m')
+    
+    pos_z = plot5.plot(time, df_filtered[mpz_col].values, pen='m')
     setup_clickable_plot(plot5, "z", "m")
+    
+    x_offset = 65
+    y_offset = 190
+    spacing = 15
+    legend_font = QtGui.QFont("Arial", 10)
+        
+    legend_items = [
+        (pos_r, "Radial Position"),
+        (pos_z, "Vertical Position")
+    ]
+    
+    for i, (curve, label) in enumerate(legend_items):
+        legend_y = y_offset + i * spacing
 
+        # Custom sample
+        sample = pg.graphicsItems.LegendItem.ItemSample(curve)
+        sample.setParentItem(plot4.graphicsItem())  # Attach to first plot
+        sample.setPos(x_offset, legend_y - 3)
+        custom_legend_items_pos.append(sample)
+        
+
+        # Label text
+        text = pg.TextItem(label, anchor=(0, 0), color='gray')
+        text.setFont(legend_font)
+        text.setParentItem(plot4.graphicsItem())
+        text.setPos(x_offset + 25, legend_y)
+        custom_legend_items_pos.append(text)
+            
+        
     plot4.setXLink(plot5)
 
     r_center = (plot4.vb.viewRange()[1][0] + plot4.vb.viewRange()[1][1]) / 2
