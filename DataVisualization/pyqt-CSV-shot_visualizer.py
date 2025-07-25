@@ -196,7 +196,7 @@ main_layout.addLayout(button_layout)
 plot_widget = pg.GraphicsLayoutWidget()
 
 # === TEMPORARY SIZE FOR EXPORT PREVIEW ========================================================================
-plot_widget.setFixedSize(1000,350) # (800, 400) for position plots
+plot_widget.setFixedSize(1000,350) # (800, 400) for position plots and (1000,350) for Mirnov plot
 # === REMOVE AFTER EXTRACTING RELEVANT PLOTS ===================================================================
 
 main_layout.addWidget(plot_widget, stretch=1)
