@@ -20,9 +20,6 @@ all_Rp_MP = []
 all_Zp_MP = []
 all_weights_MP = []
 
-# === Parameters ===
-zscore_thresh = 2.0   # For outlier filtering
-
 # === Process each shot ===
 for shot, weight in shots_weights.items():
     filepath = os.path.join(base_path, csv_template.format(shot))
@@ -45,13 +42,6 @@ for shot, weight in shots_weights.items():
         range_mask = (Rp > rp_min) & (Rp < rp_max) & (Zp > zp_min) & (Zp < zp_max)
         Rp = Rp[range_mask]
         Zp = Zp[range_mask]
-
-        # Remove outliers using z-score
-        z_rp = np.abs((Rp - np.mean(Rp)) / np.std(Rp))
-        z_zp = np.abs((Zp - np.mean(Zp)) / np.std(Zp))
-        combined_mask = (z_rp < zscore_thresh) & (z_zp < zscore_thresh)
-        Rp = Rp[combined_mask]
-        Zp = Zp[combined_mask]
 
         # Append
         all_Rp_MP.extend(Rp)
