@@ -64,7 +64,7 @@ namespace MARTe {
  *     Class = AtcaIop::UARTOutput
  *     PortName = "/dev/ttyUSB0" //Name of the UART port, Mandatory
  *     BaudRate = 115200 //BAUD UART rate
- *     //Timeout = 200000 //Maximum time to wait for data
+ *     //Timeout = 200000 //Maximum time to wait for data (optional)
  *     CPUMask = 8 //Affinity of the CPU of where to read data from
 
  *     Signals = {
@@ -73,11 +73,6 @@ namespace MARTe {
  *             OutputRange = 10.0 //Mandatory. The channel Module Output Range in volt.
  *             //OutputPolarity = Bipolar //Optional. Possible values: Bipolar, Unipolar. Default value Unipolar.
  *         }
- *          Packet = { //Actual data to write
- *         Type = uint8
- *         NumberOfElements = 15
- *       }
-
  *     }
  * }
  * </pre>
@@ -188,43 +183,51 @@ namespace MARTe {
 
 
         private:
+
             /**
              * The board device name
              */
-            StreamString portName;
+            MARTe::StreamString portName;
+
             /**
              * The board identifier
              */
             uint32 boardId;
+
             /**
              * The board file descriptor
              */
             //int32 boardFileDescriptor;
+            
             /**
              * The UART interface.
              */
             BasicUART serial;
 
             /**
-             * Timeout to wait for data to be available.
-             */
-            //uint32 serialTimeout;
-
-            /**
              */
             uint32 timeout;
-
-
 
             /**
              * DAC values
              */
             //int32 dacValues[ATCA_IOP_N_DACs];
+            
+            /**
+             * Holder for dtype
+             */
+            TypeDescriptor signalType;
+
+            /**
+             * Holder for signal name
+             */
+            MARTe::StreamString signalName;
 
             /**
              * The signal memory
              */
             float64 channelValue;
+            float32 channelValue32;
 
             /**
              * The DACs that are enabled

@@ -62,11 +62,12 @@ namespace MARTe {
       uint32 n;
       //for (n = 0u; n < ATCA_IOP_MAX_DAC_CHANNELS; n++) {
         //dacEnabled[n] = false;
-        outputRange = DAC_RANGE;
+      outputRange = DAC_RANGE;
       //}
 
       //channelsMemory = NULL_PTR(float32 *);
-      channelValue = 0.0;//NULL_PTR(float32 *);
+      channelValue = NULL_PTR(float64);//NULL_PTR(float32 *);
+      channelValue32 = NULL_PTR(MARTe::float32);//NULL_PTR(float32 *);
 
       filter = ReferenceT<RegisteredMethodsMessageFilter>(GlobalObjectsDatabase::Instance()->GetStandardHeap());
       filter->SetDestination(this);
@@ -81,7 +82,7 @@ namespace MARTe {
       //REPORT_ERROR(ErrorManagement::Information, " Close Device Status Reg %d, 0x%x", rc, statusReg);
       //close(boardFileDescriptor);
       serial.Close();
-      REPORT_ERROR_PARAMETERS(ErrorManagement::Information, "Close  %s OK.", portName);
+      REPORT_ERROR_PARAMETERS(ErrorManagement::Information, "Port %s close: OK!", portName.Buffer());
     /*
     if (channelsMemory != NULL_PTR(float32 *)) {
       delete[] channelsMemory;
@@ -100,11 +101,17 @@ namespace MARTe {
   /*lint -e{715}  [MISRA C++ Rule 0-1-11], [MISRA C++ Rule 0-1-12]. Justification: The memory buffer is independent of the bufferIdx.*/
   bool UARTOutput::GetSignalMemoryBuffer(const uint32 signalIdx, const uint32 bufferIdx, void*& signalAddress) {
     bool ok = (signalIdx < (UART_MAX_CHANNELS));
+
     if (ok) {
       //if (channelsMemory != NULL_PTR(float32 *)) {
-        signalAddress = &channelValue;
+      if (signalType == Float32Bit) {
+          signalAddress = &channelValue32;
+      } else {
+          signalAddress = &channelValue;
+      }
       //}
     }
+      
     return ok;
   }
 
@@ -159,7 +166,7 @@ namespace MARTe {
       if (ok) {
         ok = outputBrokers.Insert(broker);
       }
-      //Must also add the signals which are not triggering but that belong to the same GAM...
+      //Must also add the signals which are not triggering but belong to the same GAM...
       if (ok) {
         if (nOfFunctionSignals > 1u) {
           ReferenceT<MemoryMapOutputBroker> brokerNotSync("MemoryMapOutputBroker");
@@ -236,7 +243,7 @@ namespace MARTe {
       ok = serial.Open(portName.Buffer());
     }
     if (!ok) {
-        REPORT_ERROR_PARAMETERS(ErrorManagement::ParametersError, "The port %s Not opened.", portName);
+        REPORT_ERROR_PARAMETERS(ErrorManagement::ParametersError, "Port %s is not open.", portName.Buffer());
     }
 
     //Get individual signal parameters
@@ -269,7 +276,7 @@ namespace MARTe {
             }
             if (ok) {
               outputRange = range;
-              REPORT_ERROR_PARAMETERS(ErrorManagement::Information, " Parameter DAC Output Range %f", range);
+              REPORT_ERROR_PARAMETERS(ErrorManagement::Information, "DAC Output Range set to %f", range);
               //dacEnabled[i] = true;
               //numberOfDACsEnabled++;
             }
@@ -304,16 +311,24 @@ namespace MARTe {
         REPORT_ERROR(ErrorManagement::ParametersError, "At least one Trigger signal shall be set.");
       }
       if (ok) {
+        ok = GetSignalName(0u, signalName);
+        if (!ok) {
+          REPORT_ERROR(ErrorManagement::ParametersError, "Signal name not detected");
+        }
+      }
+      if (ok) {
         //for (i = 0u; (i < numberOfDACsEnabled) && (ok); i++) {
-          ok = (GetSignalType(0u) == Float64Bit);
+        signalType = GetSignalType(0u);
+        ok = (signalType == Float64Bit || signalType == Float32Bit);
         //}
         if (!ok) {
-          REPORT_ERROR(ErrorManagement::ParametersError, "All the DAC signals shall be of type Float64Bit");
-        }
+          REPORT_ERROR(ErrorManagement::ParametersError, "%s dtype shall be either Float64Bit or Float32Bit", signalName.Buffer());
+          }
       }
 
       uint32 nOfFunctions = GetNumberOfFunctions();
       uint32 functionIdx;
+      
       //Check that the number of samples for all the signals is one
       for (functionIdx = 0u; (functionIdx < nOfFunctions) && (ok); functionIdx++) {
         uint32 nOfSignals = 0u;
@@ -331,7 +346,6 @@ namespace MARTe {
         }
       }
 
-
       return ok;
     }
 
@@ -340,13 +354,19 @@ namespace MARTe {
       uint32 i;
       int32 w = 24;
       bool ok = true;
-      char8 text[] = "ola";
+      //char8 text[] = "ola";
       //if (channelsMemory != NULL_PTR(float32 *)) {
 
         //                value = channelsMemory[0] / DAC_RANGE;
           //for (i = 0u; (i < numberOfDACsEnabled ) && (ok); i++) {
-      int32 ser_value = channelValue / outputRange * 1000000.0;
-      REPORT_ERROR_PARAMETERS(ErrorManagement::Information, "Synchronise called. value: %f, %d", channelValue, ser_value);
+      float64 valueToSend = (signalType == Float32Bit) ? static_cast<float64>(channelValue32) : channelValue;
+      int32 ser_value = valueToSend  / outputRange * 1000000.0;
+      const char8 * const signalTypeStr = TypeDescriptor::GetTypeNameFromTypeDescriptor(signalType);
+      REPORT_ERROR_PARAMETERS(ErrorManagement::Information, "Synchronise called:\n \t \t \t \t    %s -> %s: %f => serial value: %d",
+                                                            signalName.Buffer(),
+                                                            signalTypeStr,
+                                                            valueToSend,
+                                                            ser_value);
           //w = SetDacReg(i, value);
       char8 *data = reinterpret_cast<char8*>(&ser_value);
       serial.Write(data, sizeof(int32));
