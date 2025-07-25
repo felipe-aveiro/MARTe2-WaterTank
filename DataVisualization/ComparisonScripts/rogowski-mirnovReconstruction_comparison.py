@@ -76,18 +76,21 @@ def plot_currents(csv_time, csv_current, sdas_time, sdas_current):
 
     # Plot widget
     plot_widget = pg.GraphicsLayoutWidget()
+    # === TEMPORARY SIZE FOR EXPORT PREVIEW ========================================================================
+    plot_widget.setFixedSize(700,350) # (800, 400) for position plots
+    # === REMOVE AFTER EXTRACTING RELEVANT PLOTS ===================================================================
     layout.addWidget(plot_widget)
 
-    plot = plot_widget.addPlot(title="Plasma Current")
-    plot.setLabel('bottom', 'Time (ms)')
+    plot = plot_widget.addPlot(title="Time Evolution of Plasma Current")
+    plot.setLabel('bottom', 'Time [ms]')
     plot.setLabel('left', 'Current [A]')
-    legend = plot.addLegend()
-    legend.setLabelTextSize("11pt")
+    #legend = plot.addLegend()
+    #legend.setLabelTextSize("11pt")
     plot.setXRange(160, 400, padding=0)
     plot.setYRange(-5000, 5000, padding=0)
     plot.setLimits(xMin=csv_time_aligned.min(), xMax=csv_time_aligned.max(), yMin=-5000, yMax=5000)
     plot.showGrid(x=True, y=True)
-    
+        
     # === Adjust fonts  ===
     title_font = QtGui.QFont("Arial", 14, QtGui.QFont.Bold)
     axis_font = QtGui.QFont("Arial", 11, QtGui.QFont.Bold)
@@ -96,9 +99,38 @@ def plot_currents(csv_time, csv_current, sdas_time, sdas_current):
     plot.getAxis("bottom").label.setFont(axis_font)
     plot.getAxis("left").label.setFont(axis_font)
 
-    plot.plot(csv_time_aligned, csv_current, pen=pg.mkPen('b', width=2), name="Magnetic Reconstruction")
-    plot.plot(sdas_time, sdas_current, pen=pg.mkPen('r', width=2, style=QtCore.Qt.DashLine), name="Rogowski Coil Measurement")
+    plasma_mp = plot.plot(csv_time_aligned, csv_current, pen=pg.mkPen('b', width=2), name="Magnetic Reconstruction")
+    plasma_rog = plot.plot(sdas_time, sdas_current, pen=pg.mkPen('r', width=2, style=QtCore.Qt.DashLine), name="Rogowski Coil Measurement")
 
+    x_offset = 85
+    y_offset = 190
+    spacing = 25
+    legend_font = QtGui.QFont("Arial", 10)
+        
+    legend_items = [
+        (plasma_mp, "Magnetic Reconstruction"),
+        (plasma_rog, "Rogowski Coil Measurements")
+    ]
+    
+    custom_legend_items_pos = []
+    
+    for i, (curve, label) in enumerate(legend_items):
+        legend_y = y_offset + i * spacing
+
+        # Custom sample
+        sample = pg.graphicsItems.LegendItem.ItemSample(curve)
+        sample.setParentItem(plot.graphicsItem())
+        sample.setPos(x_offset, legend_y - 3)
+        custom_legend_items_pos.append(sample)
+        
+
+        # Label text
+        text = pg.TextItem(label, anchor=(0, 0), color='gray')
+        text.setFont(legend_font)
+        text.setParentItem(plot.graphicsItem())
+        text.setPos(x_offset + 25, legend_y)
+        custom_legend_items_pos.append(text)
+    
     # Export button
     export_btn = QtWidgets.QPushButton("Export Plot")
     layout.addWidget(export_btn)
@@ -115,7 +147,6 @@ def plot_currents(csv_time, csv_current, sdas_time, sdas_current):
         )
         if path:
             exporter = ImageExporter(plot.scene())
-            exporter.parameters()['width'] = 1200
             exporter.export(path)
             print(f"\nPlot saved to {path}\n")
 

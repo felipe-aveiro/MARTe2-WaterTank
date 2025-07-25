@@ -81,7 +81,7 @@ main_layout.addLayout(button_layout)
 
 plot_widget = pg.GraphicsLayoutWidget()
 # === TEMPORARY SIZE FOR EXPORT PREVIEW ========================================================================
-plot_widget.setFixedSize(800,400)
+plot_widget.setFixedSize(900,500)
 # === REMOVE AFTER EXTRACTING RELEVANT PLOTS ===================================================================
 main_layout.addWidget(plot_widget)
 export_r_btn.show()
@@ -90,7 +90,7 @@ export_z_btn.show()
 bold_font = QtGui.QFont("Arial", 11, QtGui.QFont.Bold)
 
 # === Plot 1: Radial Position ===
-plot_r = plot_widget.addPlot(title="Time Evolution of Estimated Plasma Radial Position - Magnetic Reconstruction vs Electric Reconstruction")
+plot_r = plot_widget.addPlot(title="Time Evolution of Estimated Plasma Positions - Magnetic Reconstruction vs Electric Reconstruction")
 plot_r.titleLabel.item.setFont(QtGui.QFont("Arial", 14, QtGui.QFont.Bold))
 plot_r.setLabel('bottom', 'Time [ms]')
 plot_r.setLabel('left', 'R [m]')
@@ -113,8 +113,7 @@ plot_r.addItem(zero_lineR_lower)
 plot_widget.nextRow()
 
 # === Plot 2: Vertical Position ===
-plot_z = plot_widget.addPlot(title="Time Evolution of Estimated Plasma Vertical Position - Magnetic Reconstruction vs Electric Reconstruction")
-plot_z.titleLabel.item.setFont(QtGui.QFont("Arial", 14, QtGui.QFont.Bold))
+plot_z = plot_widget.addPlot(title="")
 plot_z.setLabel('bottom', 'Time [ms]')
 plot_z.setLabel('left', 'Z [m]')
 plot_z.getAxis("bottom").label.setFont(bold_font)
@@ -133,8 +132,8 @@ plot_z.addItem(zero_lineZ_center)
 plot_z.addItem(zero_lineZ_upper)
 plot_z.addItem(zero_lineZ_lower)
 
-x_offset = 70
-y_offset = 30
+x_offset = 60
+y_offset = 55
 spacing = 120
 legend_font = QtGui.QFont("Arial", 10)
 
@@ -152,30 +151,17 @@ for i, (curve, label) in enumerate(curves_r):
     # Sample color box
     sample = pg.graphicsItems.LegendItem.ItemSample(curve)
     sample.setParentItem(plot_r.graphicsItem())
-    legend_y = y_offset + i * 20
+    legend_y = y_offset + i * 15
     sample.setPos(x_offset, legend_y)
     custom_legend_items.append(sample)
 
     # Text label
-    text = pg.TextItem(label, anchor=(0, 0), color='w')
-    text.setFont(legend_font)
-    text.setParentItem(plot_r.graphicsItem())
-    text.setPos(x_offset + 25, legend_y)
-    custom_legend_items.append(text)
+    text_r = pg.TextItem(label, anchor=(0, 0), color='gray')
+    text_r.setFont(legend_font)
+    text_r.setParentItem(plot_r.graphicsItem())
+    text_r.setPos(x_offset + 25, legend_y)
+    custom_legend_items.append(text_r)
 
-for i, (curve, label) in enumerate(curves_z):
-    sample = pg.graphicsItems.LegendItem.ItemSample(curve)
-    sample.setParentItem(plot_z.graphicsItem())
-    legend_y = y_offset + i * 20
-    sample.setPos(x_offset, legend_y)
-    custom_legend_items.append(sample)
-
-    text = pg.TextItem(label, anchor=(0, 0), color='w')
-    text.setFont(legend_font)
-    text.setParentItem(plot_z.graphicsItem())
-    text.setPos(x_offset + 25, legend_y)
-    custom_legend_items.append(text)
-    
 # === Link X axis ===
 plot_r.setXLink(plot_z)
 
