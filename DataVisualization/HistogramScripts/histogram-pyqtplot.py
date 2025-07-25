@@ -71,7 +71,7 @@ x_max = max(x_values_ms) + 0.01
 bold_font = QtGui.QFont("Arial", 11, QtGui.QFont.Bold)
 
 # === FIRST PLOT: Simulink Histogram ===
-plot_simulink = win.addPlot(title="Simulink Histogram of Cycle Duration")
+plot_simulink = win.addPlot(title="Histograms of Cycle Duration")
 plot_simulink.setMaximumHeight(400)  # Compress vertically
 plot_simulink.titleLabel.item.setFont(QtGui.QFont("Arial", 16, QtGui.QFont.Bold))
 plot_simulink.setXRange(x_min, x_max, padding=0)
@@ -97,13 +97,13 @@ for x, y in zip(x_values_ms, percentages_simulink):
 
 # === SECOND PLOT: MARTe2 Histogram (stacked below) ===
 win.nextRow()  # Move to next row
-plot_marte2 = win.addPlot(title="GAM Histogram of Cycle Duration")
+plot_marte2 = win.addPlot(title="")
 plot_marte2.setMaximumHeight(400)  # Compress vertically
-plot_marte2.titleLabel.item.setFont(QtGui.QFont("Arial", 16, QtGui.QFont.Bold))
+#plot_marte2.titleLabel.item.setFont(QtGui.QFont("Arial", 16, QtGui.QFont.Bold))
 plot_marte2.setXRange(x_min, x_max, padding=0)
 plot_marte2.setYRange(0, 55, padding=0)
 plot_marte2.getAxis("bottom").setTicks([xticks])
-plot_marte2.setLabel('bottom', 'Cycle duration (ms)')
+plot_marte2.setLabel('bottom', 'Cycle duration [ms]')
 plot_marte2.setLabel('left', 'Percentage', units='%')
 plot_marte2.getAxis("bottom").label.setFont(bold_font)
 plot_marte2.getAxis("left").label.setFont(bold_font)
