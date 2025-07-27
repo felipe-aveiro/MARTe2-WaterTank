@@ -202,13 +202,11 @@ bool MagneticADCConversionGAM::Setup() {
             }
             
             if (ok) {
-                if (ok) {
-                    inputSignals[i] = reinterpret_cast<MARTe::float32 *>(GetInputSignalMemory(i));
-                    outputSignals[i] = reinterpret_cast<MARTe::float32 *>(GetOutputSignalMemory(i));
-                    REPORT_ERROR(ErrorManagement::Information, "Signals %s and %s reinterpret_cast OK",
-                                inputName.Buffer(),
-                                outputName.Buffer());
-                }
+                inputSignals[i] = reinterpret_cast<MARTe::float32 *>(GetInputSignalMemory(i));
+                outputSignals[i] = reinterpret_cast<MARTe::float32 *>(GetOutputSignalMemory(i));
+                REPORT_ERROR(ErrorManagement::Information, "Signals %s and %s reinterpret_cast OK",
+                            inputName.Buffer(),
+                             outputName.Buffer());
             }
 
             if (ok) {
