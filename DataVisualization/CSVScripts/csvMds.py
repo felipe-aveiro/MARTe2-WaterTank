@@ -65,9 +65,8 @@ def main():
     parser.add_argument('-s', '--shot', type=int, required=True, help='MDSplus pulse number')
     parser.add_argument('-c', '--crange', nargs='+', type=int, default=[1, 16], help='Channel range to export (e.g. 1 16)')
     parser.add_argument('-u', '--url', default=MDS_URL, help='MDSplus host URL')
-    parser.add_argument('-o', '--output', default='.', help='Output directory for CSV file')
     parser.add_argument('-m', '--maxpoints', type=int, default=500000, help='Maximum number of points to export')
-    parser.add_argument('-z', '--uncompressed', action='store_true', help='Export uncompressed CSV (default is compressed .gz)')
+    parser.add_argument('--gz', action='store_true', help='Export compressed CSV (.csv.gz)')
     args = parser.parse_args()
     print(f"\nArgs.shot {args.shot}\n")
 
@@ -80,10 +79,12 @@ def main():
     mclient.getTreeData(shot=args.shot)
 
     # Decide file name based on compression
-    if args.uncompressed:
-        output_file = os.path.join(args.output, "ISTTOK_shots_CSV_files", "csv", f"MDS_shot_{args.shot}.csv")
+    BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+    
+    if args.gz:
+        output_file = os.path.join(BASE_DIR, "ISTTOK_shots_CSV_files", "gz", f"MDS_shot_{args.shot}.csv.gz")
     else:
-        output_file = os.path.join(args.output, "ISTTOK_shots_CSV_files", "csv.gz", f"MDS_shot_{args.shot}.csv.gz")
+        output_file = os.path.join(BASE_DIR, "ISTTOK_shots_CSV_files", "csv", f"MDS_shot_{args.shot}.csv")
 
     # Ensure full directory tree exists (create parent folders if needed)
     os.makedirs(os.path.dirname(output_file), exist_ok=True)
@@ -101,7 +102,7 @@ def main():
         mclient.choppTrigg,
         channel_range,
         args.maxpoints,
-        compress=not args.uncompressed
+        compress=args.gz
     )
 
     end_time = time.perf_counter()
