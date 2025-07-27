@@ -71,7 +71,10 @@ all_Rp_MP, all_Zp_MP = np.array(all_Rp_MP), np.array(all_Zp_MP)
 
 # === PyQtGraph APP ===
 app = QtWidgets.QApplication(sys.argv)
-win = pg.GraphicsLayoutWidget(title="Plasma Position Estimates: Mirnov vs Langmuir")
+win = pg.GraphicsLayoutWidget(title="Plasma Position Estimates")
+# === TEMPORARY SIZE FOR EXPORT PREVIEW ========================================================================
+win.setFixedSize(700,350) # (800, 400) for position plots
+# === REMOVE AFTER EXTRACTING RELEVANT PLOTS ===================================================================
 win.setFixedSize(800,400)
 win.showMaximized()
 
@@ -132,7 +135,6 @@ for i, (item, label) in enumerate(legend_items):
     text.setParentItem(plot.graphicsItem())
     text.setPos(legend_x + 25, y_offset)
 
-# Add ESC to quit
 def keyPressEvent(event):
     if event.key() == QtCore.Qt.Key_Escape:
         QtWidgets.QApplication.quit()
