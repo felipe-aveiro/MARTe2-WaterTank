@@ -29,13 +29,15 @@ df.columns = df.columns.str.strip()
 # === Identify shot nº ===
 csv_filename = os.path.basename(csv_path)
 match = re.search(r'(\d{5})', csv_filename)
+use_float32 = "Atca" in csv_filename
+dtype = "float32" if use_float32 else "float64"
 shot_number = match.group(1) if match else "unknown"
 
 # === Columns ===
-time_col = "#timeI (float64)[1]"
-fused_z_col = "outputFusedZ (float64)[1]"
-vertical_ref_col = "vertical_reference (float64)[1]"
-vertical_current_request_col = "vertical_current_request (float64)[1]"
+time_col = f"#timeI ({dtype})[1]"
+fused_z_col = f"outputFusedZ ({dtype})[1]"
+vertical_ref_col = f"vertical_reference ({dtype})[1]"
+vertical_current_request_col = f"vertical_current_request ({dtype})[1]"
 
 for col in [time_col, fused_z_col, vertical_ref_col, vertical_current_request_col]:
     if col not in df.columns:
