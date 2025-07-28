@@ -196,7 +196,7 @@ main_layout.addLayout(button_layout)
 plot_widget = pg.GraphicsLayoutWidget()
 
 # === TEMPORARY SIZE FOR EXPORT PREVIEW ========================================================================
-plot_widget.setFixedSize(1000,350) # (800, 400) for position plots and (1000,350) for Mirnov plot
+#plot_widget.setFixedSize(1000,350) # (800, 400) for position plots and (1000,350) for Mirnov plot
 # === REMOVE AFTER EXTRACTING RELEVANT PLOTS ===================================================================
 
 main_layout.addWidget(plot_widget, stretch=1)
@@ -269,7 +269,7 @@ def show_main_plots():
         text.setPos(legend_x + 25, legend_y)
         custom_legend_items.append(text)
 
-    """plot_widget.nextRow()
+    plot_widget.nextRow()
     plot2 = plot_widget.addPlot(title="Time Evolution of Plasma Current reconstructed from Mirnov Coils Measurements")
     plot2.titleLabel.item.setFont(QtGui.QFont("Arial", 14, QtGui.QFont.Bold))
     plot2.setLabel('bottom', 'Time [ms]')
@@ -303,7 +303,7 @@ def show_main_plots():
         plot3.setAutoVisible(y=False)
         plot3.plot(chopper_time, df[chopper_col].values, pen=pg.mkPen('w', width=1))
         plot3.getViewBox().setMinimumHeight(60)
-        plot3.setMaximumHeight(100)"""
+        plot3.setMaximumHeight(100)
 
     toggle_buttons(show_right1=True)
 
