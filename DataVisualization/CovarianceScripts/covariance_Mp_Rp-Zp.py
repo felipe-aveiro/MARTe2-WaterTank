@@ -3,14 +3,19 @@ import numpy as np
 import os
 import matplotlib.pyplot as plt
 
-# === Configuration ===
-shots_weights = {
-    45754: 1.0,  # Multiple AC pulses, but irregular shape and premature endings
-    45967: 2.0,  # Several perfect positive pulses, all nominal current
-    46241: 3.0,  # Best overall, perfect regular AC pulses, ideal case
-    53071: 1.5,  # One positive + two negatives, good regularity but slight current drop on negatives
-    53099: 0.5,  # Poor quality pulses, irregular current, below nominal
-    53105: 1.5   # Single AC cycle, regular behavior but slightly under nominal current
+# === Define weights based on plasma behavior quality (AC pulse stability, symmetry, etc.) ===
+# Higher weights represent better performance and relevance for defining global coefficients
+shot_weights = {
+    45754: 1.35, # Multiple AC pulses, but irregular shape and premature endings
+    45967: 3.0, # Several perfect positive pulses, all nominal current
+    46241: 3.0, # Best overall, perfect regular AC pulses, ideal case
+    52856: 1.0, # Two AC pulses, below nominal and irregular
+    52857: 1.35, # Six AC pulses, below nominal and irregular
+    53058: 2.06, # One positive + three negatives, nominal current, some irregularity
+    53071: 2.41, # One positive + two negatives, good regularity but slight current drop on negatives
+    53099: 1.82, # Poor quality pulses, irregular current, below nominal
+    53105: 2.06, # Single AC cycle, regular behavior but slightly under nominal current
+    53197: 1.35, # Three AC pulses, well below nominal and irregular
 }
 
 base_path = "/home/felipe/git-repos/MARTe2-WaterTank/DataVisualization/Outputs/"
@@ -21,7 +26,7 @@ all_Zp_MP = []
 all_weights_MP = []
 
 # === Process each shot ===
-for shot, weight in shots_weights.items():
+for shot, weight in shot_weights.items():
     filepath = os.path.join(base_path, csv_template.format(shot))
     try:
         df = pd.read_csv(filepath, delimiter=';')

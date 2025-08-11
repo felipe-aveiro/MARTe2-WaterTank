@@ -4,15 +4,21 @@ import pandas as pd
 import numpy as np
 from pyqtgraph.Qt import QtWidgets, QtCore, QtGui
 import pyqtgraph as pg
+import pyqtgraph.exporters
 
-# === CONFIGURATION ===
-shots_weights = {
-    45754: 1.0,
-    45967: 2.0,
-    46241: 3.0,
-    53071: 1.5,
-    53099: 0.5,
-    53105: 1.5
+# === Define weights based on plasma behavior quality (AC pulse stability, symmetry, etc.) ===
+# Higher weights represent better performance and relevance for defining global coefficients
+shot_weights = {
+    45754: 1.35, # Multiple AC pulses, but irregular shape and premature endings
+    45967: 3.0, # Several perfect positive pulses, all nominal current
+    46241: 3.0, # Best overall, perfect regular AC pulses, ideal case
+    52856: 1.0, # Two AC pulses, below nominal and irregular
+    52857: 1.35, # Six AC pulses, below nominal and irregular
+    53058: 2.06, # One positive + three negatives, nominal current, some irregularity
+    53071: 2.41, # One positive + two negatives, good regularity but slight current drop on negatives
+    53099: 1.82, # Poor quality pulses, irregular current, below nominal
+    53105: 2.06, # Single AC cycle, regular behavior but slightly under nominal current
+    53197: 1.35, # Three AC pulses, well below nominal and irregular
 }
 
 base_path = "/home/felipe/git-repos/MARTe2-WaterTank/DataVisualization/Outputs/"
@@ -29,7 +35,7 @@ all_Rp_EP, all_Zp_EP, all_weights_LP = [], [], []
 all_Rp_MP, all_Zp_MP, all_weights_MP = [], [], []
 
 # === Load data for all shots ===
-for shot, weight in shots_weights.items():
+for shot, weight in shot_weights.items():
     filepath = os.path.join(base_path, csv_template.format(shot))
     try:
         df = pd.read_csv(filepath, delimiter=';')
@@ -158,3 +164,5 @@ btn.clicked.connect(save_plot)
 
 if __name__ == '__main__':
     QtWidgets.QApplication.instance().exec_()
+    win.keyPressEvent = lambda event: app.quit() if event.key() == QtCore.Qt.Key_Escape else None
+
