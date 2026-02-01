@@ -5,14 +5,18 @@ from sklearn.metrics import mean_squared_error, mean_absolute_error
 import sys
 import os
 
-shot_numbers = [45754, 45967, 46241, 53071, 53099, 53105]
+shot_numbers = [45754, 45967, 46241, 52856, 52857, 53058, 53071, 53099, 53105, 53197]
 shot_weights = {
-    45754: 1.0,  # Multiple AC pulses, but irregular shape and premature endings
-    45967: 2.0,  # Several perfect positive pulses, all nominal current
-    46241: 3.0,  # Best overall, perfect regular AC pulses, ideal case
-    53071: 1.5,  # One positive + two negatives, good regularity but slight current drop on negatives
-    53099: 0.5,  # Poor quality pulses, irregular current, below nominal
-    53105: 1.5   # Single AC cycle, regular behavior but slightly under nominal current
+    45754: 1.35, # Multiple AC pulses, but irregular shape and premature endings
+    45967: 3.0, # Several perfect positive pulses, all nominal current
+    46241: 3.0, # Best overall, perfect regular AC pulses, ideal case
+    52856: 1.0, # Two AC pulses, below nominal and irregular
+    52857: 1.35, # Six AC pulses, below nominal and irregular
+    53058: 2.06, # One positive + three negatives, nominal current, some irregularity
+    53071: 2.41, # One positive + two negatives, good regularity but slight current drop on negatives
+    53099: 1.82, # Poor quality pulses, irregular current, below nominal
+    53105: 2.06, # Single AC cycle, regular behavior but slightly under nominal current
+    53197: 1.35, # Three AC pulses, well below nominal and irregular
 }
 
 base_dir = "/home/felipe/git-repos/MARTe2-WaterTank/DataVisualization/Outputs/"

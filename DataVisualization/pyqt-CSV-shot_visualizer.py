@@ -378,7 +378,7 @@ def show_main_plots():
         text.setPos(legend_x + 25, legend_y)
         custom_legend_items.append(text)
 
-    """plot_widget.nextRow()
+    plot_widget.nextRow()
     plot2 = plot_widget.addPlot(title="Time Evolution of Plasma Current reconstructed from Mirnov Coils Measurements")
     plot2.titleLabel.item.setFont(QtGui.QFont("Arial", 14, QtGui.QFont.Bold))
     plot2.setLabel('bottom', 'Time [ms]')
@@ -412,7 +412,8 @@ def show_main_plots():
         plot3.setAutoVisible(y=False)
         plot3.plot(chopper_time, df[chopper_col].values, pen=pg.mkPen('w', width=1))
         plot3.getViewBox().setMinimumHeight(60)
-        plot3.setMaximumHeight(100)"""
+        plot3.setMaximumHeight(100)
+        
 
 def show_mprz_plots():
     save_current_xrange()
