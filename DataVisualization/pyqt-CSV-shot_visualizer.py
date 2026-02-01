@@ -70,13 +70,26 @@ def setup_clickable_plot(plot, y_index, y_unit):
 
     plot.scene().sigMouseClicked.connect(on_mouse_click)
 
-# === Ask user to open a CSV file ===
+"""# === Ask user to open a CSV file ===
 csv_path, _ = QtWidgets.QFileDialog.getOpenFileName(
     None,
     "Open CSV File",
     "/home/felipe/git-repos/MARTe2-WaterTank/DataVisualization/Outputs/",
     "CSV Files (*.csv);;All Files (*)"
 )
+"""
+# ==================================================================================================
+# [!] WARNING: DO NOT PUSH CHANGES
+
+# === Ask user to open a CSV file ===
+csv_path, _ = QtWidgets.QFileDialog.getOpenFileName(
+    None,
+    "Open CSV File",
+    os.path.join(os.path.expanduser("~"), "Desktop\\MARTe2-WaterTank\\Outputs"),
+    "CSV Files (*.csv);;All Files (*)"
+)
+# ==================================================================================================
+
 
 if not csv_path:
     QtWidgets.QMessageBox.critical(None, "Error", "No CSV file selected... Exiting.")
@@ -196,7 +209,7 @@ main_layout.addLayout(button_layout)
 plot_widget = pg.GraphicsLayoutWidget()
 
 # === TEMPORARY SIZE FOR EXPORT PREVIEW ========================================================================
-plot_widget.setFixedSize(1000,350) # (800, 400) for position plots and (1000,350) for Mirnov plot
+#plot_widget.setFixedSize(1000,350) # (800, 400) for position plots and (1000,350) for Mirnov plot
 # === REMOVE AFTER EXTRACTING RELEVANT PLOTS ===================================================================
 
 main_layout.addWidget(plot_widget, stretch=1)
@@ -583,7 +596,7 @@ def sync_y_range(source_plot, target_plot, offset):
     target_plot.getAxis('left').setRange(*new_target_range)
     target_plot.getAxis('left').update()
 
-def export_plot_with_dialog(plot, suggested_name):
+"""def export_plot_with_dialog(plot, suggested_name):
     options = QtWidgets.QFileDialog.Options()
     file_path, _ = QtWidgets.QFileDialog.getSaveFileName(
         main_window,
@@ -594,7 +607,23 @@ def export_plot_with_dialog(plot, suggested_name):
     )
     if file_path:
         exporter = pg.exporters.ImageExporter(plot)
+        exporter.export(file_path)"""
+
+# ==================================================================================================
+# [!] WARNING: DO NOT PUSH CHANGES
+def export_plot_with_dialog(plot, suggested_name):
+    options = QtWidgets.QFileDialog.Options()
+    file_path, _ = QtWidgets.QFileDialog.getSaveFileName(
+        main_window,
+        "Save Plot As...",
+        os.path.join(os.path.expanduser("~"), "Documents\\Tese\\Imagens", suggested_name),
+        "PNG Files (*.png);;All Files (*)",
+        options=options
+    )
+    if file_path:
+        exporter = pg.exporters.ImageExporter(plot)
         exporter.export(file_path)
+# ==================================================================================================
 
 def toggle_buttons(show_right1=False, show_right2=False, show_right3=False, show_right4=False,
                    show_left1=False, show_left2=False, show_left3=False, show_left4=False):
