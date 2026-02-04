@@ -27,8 +27,8 @@ def signal_name_dict():
     for i in range(4):
         signal_dict[f'Langmuir probe no. {i+1}'] = f'MARTE_NODE_IVO3.DataCollection.Channel_{str(24+i).zfill(3)}'
     
-    # Rogowski coil channel (228)
-    signal_dict['Rogowski coil'] = 'MARTE_NODE_IVO3.DataCollection.Channel_228'
+    # Rogowski coil channel (088)
+    signal_dict['Rogowski coil'] = 'MARTE_NODE_IVO3.DataCollection.Channel_088'
 
     return signal_dict
 

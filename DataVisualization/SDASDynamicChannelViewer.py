@@ -374,7 +374,7 @@ class SDASPlotter(QtWidgets.QMainWindow):
 
         # Keeps reader compatible AND keeps the ID visible:
         # ID comes after the name using a safe separator.
-        # Example: "rogowski_ch__MARTE_NODE_IVO3.DataCollection.Channel_049 (float64)[1]"
+        # Example: "rogowski_ch__MARTE_NODE_IVO3.DataCollection.Channel_088 (float64)[1]"
         safe_id = channel_id.replace(" ", "_")
         signal_col = f"{name}__{safe_id} ({dtype})[1]"
         return time_col, signal_col
