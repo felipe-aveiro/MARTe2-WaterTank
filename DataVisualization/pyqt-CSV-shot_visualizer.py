@@ -378,25 +378,39 @@ def show_main_plots():
         text.setPos(legend_x + 25, legend_y)
         custom_legend_items.append(text)
 
-    plot_widget.nextRow()
-    plot2 = plot_widget.addPlot(title="Time Evolution of Plasma Current reconstructed from Mirnov Coils Measurements")
-    plot2.titleLabel.item.setFont(QtGui.QFont("Arial", 14, QtGui.QFont.Bold))
-    plot2.setLabel('bottom', 'Time [ms]')
-    plot2.setLabel('left', 'Current [A]')
-    plot2.getAxis("bottom").label.setFont(bold_font)
-    plot2.getAxis("left").label.setFont(bold_font)
-    plot2.setXRange(time_min, time_max, padding=0)
-    plot2.setLimits(xMin=time_min, xMax=time_max)
-    plot2.setAutoVisible(y=True)
-    zero_line2 = pg.InfiniteLine(pos=0, angle=0, pen=pg.mkPen('w', width=1, style=QtCore.Qt.DashLine))
-    plot2.addItem(zero_line2)
-    plot2.plot(time, df_filtered[mpip_col].values, pen='r')
-    setup_clickable_plot(plot2, "Iₚ", "A")
+    # === Plasma current plot (only if outputMpIp exists) ===
+    if mpip_col is not None:
+        plot_widget.nextRow()
 
-    plot1.setXLink(plot2)
+        plot2 = plot_widget.addPlot(
+            title="Time Evolution of Plasma Current reconstructed from Mirnov Coils Measurements"
+        )
+        plot2.titleLabel.item.setFont(QtGui.QFont("Arial", 14, QtGui.QFont.Bold))
+        plot2.setLabel('bottom', 'Time [ms]')
+        plot2.setLabel('left', 'Current [A]')
+        plot2.getAxis("bottom").label.setFont(bold_font)
+        plot2.getAxis("left").label.setFont(bold_font)
+        plot2.setXRange(time_min, time_max, padding=0)
+        plot2.setLimits(xMin=time_min, xMax=time_max)
+        plot2.setAutoVisible(y=True)
 
-    plot1.setXRange(*current_xrange, padding=0)
-    plot2.setXRange(*current_xrange, padding=0)
+        zero_line2 = pg.InfiniteLine(
+            pos=0, angle=0,
+            pen=pg.mkPen('w', width=1, style=QtCore.Qt.DashLine)
+        )
+        plot2.addItem(zero_line2)
+
+        plot2.plot(time, df_filtered[mpip_col].values, pen='r')
+        setup_clickable_plot(plot2, "Iₚ", "A")
+
+        plot1.setXLink(plot2)
+
+        plot1.setXRange(*current_xrange, padding=0)
+        plot2.setXRange(*current_xrange, padding=0)
+
+    else:
+        print("[WARNING!] outputMpIp not found -> showing only Mirnov plot\n")
+        plot1.setXRange(*current_xrange, padding=0)
 
     if has_chopper:
         plot_widget.nextRow()
@@ -575,13 +589,13 @@ def show_rogowski_comparison_plot():
     plot_rogowski.setLimits(xMin=time_min, xMax=time_max)
     if pd.notna(rogowski_col): plot_rogowski.plot(time, df_filtered[rogowski_col].values, pen='m', name="Rogowski Measurement")
     else: QtWidgets.QMessageBox.warning(None, "Warning", "No Rogowski data found.")
+    zero_line = pg.InfiniteLine(pos=0, angle=0, pen=pg.mkPen('w', width=1, style=QtCore.Qt.DashLine))
+    plot_rogowski.addItem(zero_line)
     if mpip_col is not None:
         plot_rogowski.plot(time, df_filtered[mpip_col].values, pen='r', name="Magnetic Reconstruction")
     else:
         QtWidgets.QMessageBox.warning(None, "WARNING!", "No Magnetic Reconstruction (outputMpIp) found. Only showing Rogowski coil measurements.")
     plot_rogowski.setAutoVisible(y=True)
-    zero_line = pg.InfiniteLine(pos=0, angle=0, pen=pg.mkPen('w', width=1, style=QtCore.Qt.DashLine))
-    plot_rogowski.addItem(zero_line)
     setup_clickable_plot(plot_rogowski, "Iₚ", "A")
 
     plot_rogowski.setXRange(*current_xrange, padding=0)
