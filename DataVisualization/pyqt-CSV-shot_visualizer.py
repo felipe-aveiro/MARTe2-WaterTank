@@ -17,6 +17,13 @@ active_plot = None
 custom_legend_items = []
 custom_legend_items_pos = []
 
+current_page = 0
+# 0: main_plots
+# 1: mprz_plots
+# 2: rogowski_comparison
+# 3: pid_request
+# 4: fusion_comparison
+
 def clear_selection(plot):
     if plot in all_annotations:
         for item in all_annotations[plot] + all_markers[plot]:
@@ -70,13 +77,19 @@ def setup_clickable_plot(plot, y_index, y_unit):
 
     plot.scene().sigMouseClicked.connect(on_mouse_click)
 
+# ==================================================================================================
+# [!] WARNING: DO NOT PUSH CHANGES
+
 # === Ask user to open a CSV file ===
+BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..")) 
 csv_path, _ = QtWidgets.QFileDialog.getOpenFileName(
     None,
     "Open CSV File",
-    "/home/felipe/git-repos/MARTe2-WaterTank/DataVisualization/Outputs/",
+    os.path.join(BASE_DIR, "DataVisualization\\Outputs"),
     "CSV Files (*.csv);;All Files (*)"
 )
+# ==================================================================================================
+
 
 if not csv_path:
     QtWidgets.QMessageBox.critical(None, "Error", "No CSV file selected... Exiting.")
@@ -107,31 +120,122 @@ dtype = "float32" if use_float32 else "float64"
 match = re.search(r'(\d{5})', csv_filename)
 shot_number = match.group(1) if match else "unknown"
 
-# === Identify columns ===
-time_col = f"#timeI ({dtype})[1]"
-mirnov_cols = [f"inputMirnov{i} ({dtype})[1]" for i in range(12)]
-mpip_col = f"outputMpIp ({dtype})[1]"
-mpr_col = f"outputMpR ({dtype})[1]"
-mpz_col = f"outputMpZ ({dtype})[1]"
-chopper_col = f"chopper_trigger ({dtype})[1]"
-rogowski_names = [f"rogowski_ch ({dtype})[1]", f"rogowski_coil ({dtype})[1]", f"rogowski_ch_c ({dtype})[1]", f"mds_ch12 ({dtype})[1]"]
-rogowski_col = next((col for col in rogowski_names if col in df.columns), None)
-pid_v_candidates = [f"VerticalPFCVoltageRequest ({dtype})[1]", f"vertical_current_request ({dtype})[1]"]
-pid_r_candidates = [f"RadialPFCVoltageRequest ({dtype})[1]", f"radial_current_request ({dtype})[1]"]
-pid_available = (
-    any(col in df.columns for col in pid_v_candidates) and
-    any(col in df.columns for col in pid_r_candidates)
-)
-pid_v_col = next((col for col in pid_v_candidates if col in df.columns), None)
-pid_r_col = next((col for col in pid_r_candidates if col in df.columns), None)
-fused_r_col = f"outputFusedR ({dtype})[1]"
-fused_z_col = f"outputFusedZ ({dtype})[1]"
-ep_r_col = f"outputEpR ({dtype})[1]"
-ep_z_col = f"outputEpZ ({dtype})[1]"
-fusion_available = all(col in df.columns for col in [fused_r_col, fused_z_col, ep_r_col, ep_z_col])
+def pick_col(df, candidates, label=None, warn=True):
+    """
+    Returns the first column found in df.columns among `candidates`.
+    If none found, returns None (and optionally warns).
+    """
+    for c in candidates:
+        if c in df.columns:
+            return c
+    if warn:
+        name = label if label is not None else (candidates[0] if candidates else "unknown")
+        print(f"[WARNING!] Missing column(s) for: {name}\n")
+    return None
 
-has_chopper = chopper_col in df.columns
+# === Identify columns ===
+time_col = pick_col(
+    df,
+    [f"#timeI ({dtype})[1]", "#timeI (float64)[1]", "#timeI (float32)[1]"],
+    label="time",
+    warn=True
+)
+
+mirnov_cols = []
+for i in range(12):
+    col = pick_col(
+        df,
+        [f"inputMirnov{i} ({dtype})[1]", f"inputMirnov{i} (float64)[1]", f"inputMirnov{i} (float32)[1]"],
+        label=f"inputMirnov{i}",
+        warn=True
+    )
+    mirnov_cols.append(col)
+
+mpip_col = pick_col(
+    df,
+    [f"outputMpIp ({dtype})[1]", "outputMpIp (float64)[1]", "outputMpIp (float32)[1]"],
+    label="outputMpIp",
+    warn=False
+)
+mpr_col = pick_col(
+    df,
+    [f"outputMpR ({dtype})[1]", "outputMpR (float64)[1]", "outputMpR (float32)[1]"],
+    label="outputMpR",
+    warn=False
+)
+mpz_col = pick_col(
+    df,
+    [f"outputMpZ ({dtype})[1]", "outputMpZ (float64)[1]", "outputMpZ (float32)[1]"],
+    label="outputMpZ",
+    warn=False
+)
+
+chopper_col = pick_col(
+    df,
+    [f"chopper_trigger ({dtype})[1]", "chopper_trigger (float64)[1]", "chopper_trigger (float32)[1]"],
+    label="chopper_trigger",
+    warn=False
+)
+
+rogowski_candidates = [
+    f"rogowski_ch ({dtype})[1]", f"rogowski_coil ({dtype})[1]", f"rogowski_ch_c ({dtype})[1]", f"mds_ch12 ({dtype})[1]",
+    "rogowski_ch (float64)[1]", "rogowski_coil (float64)[1]", "rogowski_ch_c (float64)[1]", "mds_ch12 (float64)[1]",
+    "rogowski_ch (float32)[1]", "rogowski_coil (float32)[1]", "rogowski_ch_c (float32)[1]", "mds_ch12 (float32)[1]"
+]
+rogowski_col = pick_col(df, rogowski_candidates, label="rogowski", warn=False)
+
+pid_v_candidates = [
+    f"vertical_current_request ({dtype})[1]",
+    "vertical_current_request (float64)[1]",
+    "vertical_current_request (float32)[1]"
+]
+pid_r_candidates = []  # intentionally unused for now (vertical-only control)
+
+pid_v_col = pick_col(df, pid_v_candidates, label="vertical_current_request", warn=False)
+pid_r_col = None  # vertical-only
+pid_available = (pid_v_col is not None)
+
+fused_r_col = pick_col(
+    df,
+    [f"outputFusedR ({dtype})[1]", "outputFusedR (float64)[1]", "outputFusedR (float32)[1]"],
+    label="outputFusedR",
+    warn=False
+)
+fused_z_col = pick_col(
+    df,
+    [f"outputFusedZ ({dtype})[1]", "outputFusedZ (float64)[1]", "outputFusedZ (float32)[1]"],
+    label="outputFusedZ",
+    warn=False
+)
+ep_r_col = pick_col(
+    df,
+    [f"outputEpR ({dtype})[1]", "outputEpR (float64)[1]", "outputEpR (float32)[1]"],
+    label="outputEpR",
+    warn=False
+)
+ep_z_col = pick_col(
+    df,
+    [f"outputEpZ ({dtype})[1]", "outputEpZ (float64)[1]", "outputEpZ (float32)[1]"],
+    label="outputEpZ",
+    warn=False
+)
+
+z_ref_col = pick_col(
+    df,
+    [f"vertical_reference ({dtype})[1]", "vertical_reference (float64)[1]", "vertical_reference (float32)[1]"],
+    label="vertical_reference",
+    warn=False
+)
+
+fusion_available = all(c is not None for c in [fused_r_col, fused_z_col, ep_r_col, ep_z_col])
+fusion_min_available = (fused_r_col is not None) and (fused_z_col is not None)
+
+has_chopper = chopper_col is not None
 has_rogowski = rogowski_col is not None
+
+if time_col is None:
+    QtWidgets.QMessageBox.critical(None, "Error", "Time column not found (#timeI). Exiting.")
+    sys.exit()
 
 full_time = (df[time_col] - df[time_col].iloc[0]) * 1e3
 full_time_min, full_time_max = full_time.min(), full_time.max()
@@ -180,6 +284,10 @@ export6_btn = QtWidgets.QPushButton("Export PID Request Plot")
 export7_btn = QtWidgets.QPushButton("Export Fusion Radial Position Plot")
 export8_btn = QtWidgets.QPushButton("Export Fusion Vertical Position Plot")
 
+# Make export buttons immune to keyboard focus (so arrow keys always go to main_window)
+for btn in (export1_btn, export2_btn, export3_btn, export4_btn, export5_btn, export6_btn, export7_btn, export8_btn):
+    btn.setFocusPolicy(QtCore.Qt.NoFocus)
+
 for btn in (export3_btn, export4_btn, export5_btn, export6_btn, export7_btn, export8_btn):
     btn.hide()
 
@@ -195,10 +303,6 @@ main_layout.addLayout(button_layout)
 
 plot_widget = pg.GraphicsLayoutWidget()
 
-# === TEMPORARY SIZE FOR EXPORT PREVIEW ========================================================================
-#plot_widget.setFixedSize(1000,350) # (800, 400) for position plots and (1000,350) for Mirnov plot
-# === REMOVE AFTER EXTRACTING RELEVANT PLOTS ===================================================================
-
 main_layout.addWidget(plot_widget, stretch=1)
 
 def show_main_plots():
@@ -208,6 +312,9 @@ def show_main_plots():
     for item in custom_legend_items:
         item.setParentItem(None)
     custom_legend_items = []
+
+    global current_page
+    current_page = 0
 
     global plot1, plot2, plot3
 
@@ -249,6 +356,8 @@ def show_main_plots():
     legend_font = QtGui.QFont("Arial", 10)
     
     for i, (col, color) in enumerate(zip(mirnov_cols, colors)):
+        if col is None:
+            continue
         y = df_filtered[col].values
         coil_name = f"Coil {i+1}"
         curve = plot1.plot(time, y, pen=pg.mkPen(color=color, width=1), name=coil_name)
@@ -269,25 +378,39 @@ def show_main_plots():
         text.setPos(legend_x + 25, legend_y)
         custom_legend_items.append(text)
 
-    plot_widget.nextRow()
-    plot2 = plot_widget.addPlot(title="Time Evolution of Plasma Current reconstructed from Mirnov Coils Measurements")
-    plot2.titleLabel.item.setFont(QtGui.QFont("Arial", 14, QtGui.QFont.Bold))
-    plot2.setLabel('bottom', 'Time [ms]')
-    plot2.setLabel('left', 'Current [A]')
-    plot2.getAxis("bottom").label.setFont(bold_font)
-    plot2.getAxis("left").label.setFont(bold_font)
-    plot2.setXRange(time_min, time_max, padding=0)
-    plot2.setLimits(xMin=time_min, xMax=time_max)
-    plot2.setAutoVisible(y=True)
-    zero_line2 = pg.InfiniteLine(pos=0, angle=0, pen=pg.mkPen('w', width=1, style=QtCore.Qt.DashLine))
-    plot2.addItem(zero_line2)
-    plot2.plot(time, df_filtered[mpip_col].values, pen='r')
-    setup_clickable_plot(plot2, "Iₚ", "A")
+    # === Plasma current plot (only if outputMpIp exists) ===
+    if mpip_col is not None:
+        plot_widget.nextRow()
 
-    plot1.setXLink(plot2)
+        plot2 = plot_widget.addPlot(
+            title="Time Evolution of Plasma Current reconstructed from Mirnov Coils Measurements"
+        )
+        plot2.titleLabel.item.setFont(QtGui.QFont("Arial", 14, QtGui.QFont.Bold))
+        plot2.setLabel('bottom', 'Time [ms]')
+        plot2.setLabel('left', 'Current [A]')
+        plot2.getAxis("bottom").label.setFont(bold_font)
+        plot2.getAxis("left").label.setFont(bold_font)
+        plot2.setXRange(time_min, time_max, padding=0)
+        plot2.setLimits(xMin=time_min, xMax=time_max)
+        plot2.setAutoVisible(y=True)
 
-    plot1.setXRange(*current_xrange, padding=0)
-    plot2.setXRange(*current_xrange, padding=0)
+        zero_line2 = pg.InfiniteLine(
+            pos=0, angle=0,
+            pen=pg.mkPen('w', width=1, style=QtCore.Qt.DashLine)
+        )
+        plot2.addItem(zero_line2)
+
+        plot2.plot(time, df_filtered[mpip_col].values, pen='r')
+        setup_clickable_plot(plot2, "Iₚ", "A")
+
+        plot1.setXLink(plot2)
+
+        plot1.setXRange(*current_xrange, padding=0)
+        plot2.setXRange(*current_xrange, padding=0)
+
+    else:
+        print("[WARNING!] outputMpIp not found -> showing only Mirnov plot\n")
+        plot1.setXRange(*current_xrange, padding=0)
 
     if has_chopper:
         plot_widget.nextRow()
@@ -304,18 +427,35 @@ def show_main_plots():
         plot3.plot(chopper_time, df[chopper_col].values, pen=pg.mkPen('w', width=1))
         plot3.getViewBox().setMinimumHeight(60)
         plot3.setMaximumHeight(100)
-
-    toggle_buttons(show_right1=True)
+        
 
 def show_mprz_plots():
     save_current_xrange()
     plot_widget.clear()
+    
+        # If this CSV has no Mirnov position outputs, skip this page
+    if (mpr_col is None) and (mpz_col is None):
+        print("[WARNING!] No outputMpR/outputMpZ found -> skipping Mirnov position page (show_mprz_plots)\n")
+
+        # Next page priority: Rogowski -> PID -> Fusion -> back to main
+        if has_rogowski:
+            show_rogowski_comparison_plot()
+        elif pid_available:
+            show_pid_request_plots()
+        elif fusion_min_available:  # make sure you defined this global flag
+            show_fusion_comparison_plot()
+        else:
+            show_main_plots()
+        return
     
     global custom_legend_items_pos
     for item in custom_legend_items_pos:
         item.setParentItem(None)
     custom_legend_items_pos = []
     
+    global current_page
+    current_page = 1
+
     export1_btn.hide()
     export2_btn.hide()
     export5_btn.hide()
@@ -345,7 +485,13 @@ def show_mprz_plots():
     plot4.addItem(zero_lineR_lower)
     
     # === Radial position ===
-    pos_r = plot4.plot(time, df_filtered[mpr_col].values, pen='c')
+    pos_r = None
+
+    if mpr_col is not None:
+        pos_r = plot4.plot(time, df_filtered[mpr_col].values, pen='c')
+    else:
+        print("[WARNING!] outputMpR not found -> skipping Mirnov radial plot\n")
+
     setup_clickable_plot(plot4, "R", "m")
 
     plot_widget.nextRow()
@@ -368,7 +514,13 @@ def show_mprz_plots():
     plot5.addItem(zero_lineZ_upper)
     plot5.addItem(zero_lineZ_lower)
     
-    pos_z = plot5.plot(time, df_filtered[mpz_col].values, pen='m')
+    pos_z = None
+
+    if mpz_col is not None:
+        pos_z = plot5.plot(time, df_filtered[mpz_col].values, pen='m')
+    else:
+        print("[WARNING!] outputMpZ not found -> skipping Mirnov vertical plot\n")
+
     setup_clickable_plot(plot5, "z", "m")
     
     x_offset = 65
@@ -376,10 +528,11 @@ def show_mprz_plots():
     spacing = 15
     legend_font = QtGui.QFont("Arial", 10)
         
-    legend_items = [
-        (pos_r, "Radial Position"),
-        (pos_z, "Vertical Position")
-    ]
+    legend_items = []
+    if pos_r is not None:
+        legend_items.append((pos_r, "Radial Position"))
+    if pos_z is not None:
+        legend_items.append((pos_z, "Vertical Position"))
     
     for i, (curve, label) in enumerate(legend_items):
         legend_y = y_offset + i * spacing
@@ -412,10 +565,11 @@ def show_mprz_plots():
     plot4.setXRange(*current_xrange, padding=0)
     plot5.setXRange(*current_xrange, padding=0)
 
-    toggle_buttons(show_right2=True, show_left1=True)
-
 
 def show_rogowski_comparison_plot():
+    global current_page
+    current_page = 2
+    
     save_current_xrange()
     plot_widget.clear() 
     export1_btn.hide()
@@ -435,27 +589,21 @@ def show_rogowski_comparison_plot():
     plot_rogowski.setLimits(xMin=time_min, xMax=time_max)
     if pd.notna(rogowski_col): plot_rogowski.plot(time, df_filtered[rogowski_col].values, pen='m', name="Rogowski Measurement")
     else: QtWidgets.QMessageBox.warning(None, "Warning", "No Rogowski data found.")
-    plot_rogowski.plot(time, df_filtered[mpip_col].values, pen='r', name="Magnetic Reconstruction") # df_filtered[mpip_col].values * 1e-3 * -1 to guarantee that both signals are essentially in the same range and polarity
-    plot_rogowski.setAutoVisible(y=True)
     zero_line = pg.InfiniteLine(pos=0, angle=0, pen=pg.mkPen('w', width=1, style=QtCore.Qt.DashLine))
     plot_rogowski.addItem(zero_line)
+    if mpip_col is not None:
+        plot_rogowski.plot(time, df_filtered[mpip_col].values, pen='r', name="Magnetic Reconstruction")
+    else:
+        QtWidgets.QMessageBox.warning(None, "WARNING!", "No Magnetic Reconstruction (outputMpIp) found. Only showing Rogowski coil measurements.")
+    plot_rogowski.setAutoVisible(y=True)
     setup_clickable_plot(plot_rogowski, "Iₚ", "A")
 
     plot_rogowski.setXRange(*current_xrange, padding=0)
 
-    toggle_buttons(show_left2=True, show_right3=True)
-
-    if pid_available:
-        right_arrow3.show()
-    else:
-        right_arrow3.hide()
-
-    if fusion_available:
-        right_arrow4.show()
-    else:
-        right_arrow4.hide()
-
 def show_pid_request_plots():
+    global current_page
+    current_page = 3
+
     save_current_xrange()
     plot_widget.clear()
 
@@ -468,52 +616,41 @@ def show_pid_request_plots():
     export8_btn.hide()
     export6_btn.show()
 
-    # --- Radial Voltage Request ---
-    plot_vr = plot_widget.addPlot(title="RadialPFCVoltageRequest vs Time")
-    plot_vr.setLabel('bottom', 'Time [ms]')
-    plot_vr.setLabel('left', 'Radial Voltage [V]')
-    plot_vr.setXRange(time_min, time_max, padding=0)
-    plot_vr.setLimits(xMin=time_min, xMax=time_max)
-    plot_vr.setAutoVisible(y=True)
-    zero_line_r = pg.InfiniteLine(pos=0, angle=0, pen=pg.mkPen('w', width=1, style=QtCore.Qt.DashLine))
-    plot_vr.addItem(zero_line_r)
-    plot_vr.plot(time, df_filtered[pid_r_col].values, pen='c')
-    setup_clickable_plot(plot_vr, "Signal", "")
+    if pid_v_col is None:
+        QtWidgets.QMessageBox.warning(None, "Warning", "vertical_current_request not found in this CSV.")
+        # Skip forward if possible
+        if fusion_min_available:
+            show_fusion_comparison_plot()
+        elif has_rogowski:
+            show_rogowski_comparison_plot()
+        else:
+            show_main_plots()
+        return
 
-    plot_widget.nextRow()
+    bold_font = QtGui.QFont("Arial", 11, QtGui.QFont.Bold)
 
-    # --- Vertical Voltage Request ---
-    plot_vz = plot_widget.addPlot(title="VerticalPFCVoltageRequest vs Time")
-    plot_vz.setLabel('bottom', 'Time [ms]')
-    plot_vz.setLabel('left', 'Vertical Voltage [V]')
-    plot_vz.setXRange(time_min, time_max, padding=0)
-    plot_vz.setLimits(xMin=time_min, xMax=time_max)
-    plot_vz.setAutoVisible(y=True)
-    zero_line_z = pg.InfiniteLine(pos=0, angle=0, pen=pg.mkPen('w', width=1, style=QtCore.Qt.DashLine))
-    plot_vz.addItem(zero_line_z)
-    plot_vz.plot(time, df_filtered[pid_v_col].values, pen='m')
-    plot_vz.setYRange(plot_vr.vb.viewRange()[1][0], plot_vr.vb.viewRange()[1][1])
+    plot_v = plot_widget.addPlot(title="Vertical Current Request vs Time")
+    plot_v.setLabel('bottom', 'Time [ms]')
+    plot_v.setLabel('left', 'Vertical Current [A]')
+    plot_v.getAxis("bottom").label.setFont(bold_font)
+    plot_v.getAxis("left").label.setFont(bold_font)
 
-    setup_clickable_plot(plot_vz, "Signal", "")
+    plot_v.setXRange(time_min, time_max, padding=0)
+    plot_v.setLimits(xMin=time_min, xMax=time_max)
+    plot_v.setAutoVisible(y=True)
 
-    # Link horizontal zoom/pan
-    plot_vr.setXLink(plot_vz)
+    zero_line = pg.InfiniteLine(pos=0, angle=0, pen=pg.mkPen('w', width=1, style=QtCore.Qt.DashLine))
+    plot_v.addItem(zero_line)
 
-    # Sync Y range logic (if needed)
-    vr_center = (plot_vr.vb.viewRange()[1][0] + plot_vr.vb.viewRange()[1][1]) / 2
-    vz_center = (plot_vz.vb.viewRange()[1][0] + plot_vz.vb.viewRange()[1][1]) / 2
-    offset_4to5 = vz_center - vr_center
-    offset_5to4 = vr_center - vz_center
+    plot_v.plot(time, df_filtered[pid_v_col].values, pen='m')
+    setup_clickable_plot(plot_v, "Signal", "A")
 
-    plot_vr.vb.sigYRangeChanged.connect(lambda: sync_y_range(plot_vr, plot_vz, offset_4to5))
-    plot_vz.vb.sigYRangeChanged.connect(lambda: sync_y_range(plot_vz, plot_vr, offset_5to4))
-
-    plot_vr.setXRange(*current_xrange, padding=0)
-    plot_vz.setXRange(*current_xrange, padding=0)
-
-    toggle_buttons(show_left3=True)
+    plot_v.setXRange(*current_xrange, padding=0)
 
 def show_fusion_comparison_plot():
+    global current_page
+    current_page = 4
+    
     save_current_xrange()
     plot_widget.clear()
 
@@ -525,6 +662,11 @@ def show_fusion_comparison_plot():
     export6_btn.hide()
     export7_btn.show()
     export8_btn.show()
+    
+    fusion_min_available = (fused_r_col is not None) and (fused_z_col is not None)
+    if not fusion_min_available:
+        QtWidgets.QMessageBox.warning(None, "Warning", "Fused signals (outputFusedR/Z) not found in this CSV.")
+        return
 
     plot_r = plot_widget.addPlot(title="Radial Position: Magnetic vs Electric vs Fused")
     plot_r.setLabel('bottom', 'Time [ms]')
@@ -537,8 +679,17 @@ def show_fusion_comparison_plot():
     plot_r.addItem(pg.InfiniteLine(pos=0.46 + 0.085, angle=0, pen=pg.mkPen('r', width=2, style=QtCore.Qt.DotLine)))
     plot_r.addItem(pg.InfiniteLine(pos=0.46 - 0.085, angle=0, pen=pg.mkPen('r', width=2, style=QtCore.Qt.DotLine)))
 
-    plot_r.plot(time, df_filtered[mpr_col].values, pen='m', name="Mirnov")
-    plot_r.plot(time, df_filtered[ep_r_col].values, pen='g', name="Langmuir")
+    if mpr_col is not None:
+        plot_r.plot(time, df_filtered[mpr_col].values, pen='m', name="Mirnov")
+    else:
+        print("[WARNING!] outputMpR not found -> skipping Mirnov (R)\n")
+
+    if ep_r_col is not None:
+        plot_r.plot(time, df_filtered[ep_r_col].values, pen='g', name="Langmuir")
+    else:
+        print("[WARNING!] outputEpR not found -> skipping Langmuir (R)\n")
+
+    # fused_r_col guaranteed by fusion_min_available
     plot_r.plot(time, df_filtered[fused_r_col].values, pen='b', name="Fused")
 
     plot_widget.nextRow()
@@ -554,13 +705,29 @@ def show_fusion_comparison_plot():
     plot_z.addItem(pg.InfiniteLine(pos=0.085, angle=0, pen=pg.mkPen('r', width=2, style=QtCore.Qt.DotLine)))
     plot_z.addItem(pg.InfiniteLine(pos=-0.085, angle=0, pen=pg.mkPen('r', width=2, style=QtCore.Qt.DotLine)))
 
-    plot_z.plot(time, df_filtered[mpz_col].values, pen='m', name="Mirnov")
-    plot_z.plot(time, df_filtered[ep_z_col].values, pen='g', name="Langmuir")
+    if mpz_col is not None:
+        plot_z.plot(time, df_filtered[mpz_col].values, pen='m', name="Mirnov")
+    else:
+        print("[WARNING!] outputMpZ not found -> skipping Mirnov (Z)\n")
+
+    if ep_z_col is not None:
+        plot_z.plot(time, df_filtered[ep_z_col].values, pen='g', name="Langmuir")
+    else:
+        print("[WARNING!] outputEpZ not found -> skipping Langmuir (Z)\n")
+
+    # fused_z_col guaranteed by fusion_min_available
     plot_z.plot(time, df_filtered[fused_z_col].values, pen='b', name="Fused")
 
-    plot_r.setXLink(plot_z)
+    # ===== Reference also appears in fused graph =====
+    if z_ref_col is not None:
+        plot_z.plot(
+            time,
+            df_filtered[z_ref_col].values,
+            pen=pg.mkPen('w', width=2, style=QtCore.Qt.DashLine),
+            name="Reference"
+        )
 
-    toggle_buttons(show_left4=True)
+    plot_r.setXLink(plot_z)
 
 def sync_y_range(source_plot, target_plot, offset):
     if not target_plot.vb:
@@ -583,7 +750,7 @@ def sync_y_range(source_plot, target_plot, offset):
     target_plot.getAxis('left').setRange(*new_target_range)
     target_plot.getAxis('left').update()
 
-def export_plot_with_dialog(plot, suggested_name):
+"""def export_plot_with_dialog(plot, suggested_name):
     options = QtWidgets.QFileDialog.Options()
     file_path, _ = QtWidgets.QFileDialog.getSaveFileName(
         main_window,
@@ -594,102 +761,23 @@ def export_plot_with_dialog(plot, suggested_name):
     )
     if file_path:
         exporter = pg.exporters.ImageExporter(plot)
+        exporter.export(file_path)"""
+
+# ==================================================================================================
+# [!] WARNING: DO NOT PUSH CHANGES
+def export_plot_with_dialog(plot, suggested_name):
+    options = QtWidgets.QFileDialog.Options()
+    file_path, _ = QtWidgets.QFileDialog.getSaveFileName(
+        main_window,
+        "Save Plot As...",
+        os.path.join(os.path.expanduser("~"), "Documents\\Tese\\Imagens", suggested_name),
+        "PNG Files (*.png);;All Files (*)",
+        options=options
+    )
+    if file_path:
+        exporter = pg.exporters.ImageExporter(plot)
         exporter.export(file_path)
-
-def toggle_buttons(show_right1=False, show_right2=False, show_right3=False, show_right4=False,
-                   show_left1=False, show_left2=False, show_left3=False, show_left4=False):
-    right_arrow.setVisible(show_right1)
-    right_arrow2.setVisible(has_rogowski and show_right2)
-    right_arrow3.setVisible(pid_available and has_rogowski and show_right3)
-    right_arrow4.setVisible(fusion_available and show_right3)
-    left_arrow.setVisible(show_left1)
-    left_arrow2.setVisible(show_left2)
-    left_arrow3.setVisible(pid_available and show_left3)
-    left_arrow4.setVisible(fusion_available and show_left4)
-
-right_arrow = QtWidgets.QPushButton("⊳", main_window)
-right_arrow.setToolTip("Show MpR & MpZ Plots")
-right_arrow.setFixedSize(40, 40)
-right_arrow.setStyleSheet("""
-    QPushButton {
-        border: 2px solid #AAA;
-        background-color: rgba(0, 0, 0, 0);
-        color: white;
-        font-size: 20px;
-        font-weight: bold;
-        border-radius: 8px;
-    }
-    QPushButton:hover {
-        border: 2px solid #4caf50;
-        background-color: rgba(255, 255, 255, 0.05);
-    }
-""")
-right_arrow.clicked.connect(show_mprz_plots)
-
-left_arrow = QtWidgets.QPushButton("⊲", main_window)
-left_arrow.setToolTip("Show Mirnov & MpIp Plots")
-left_arrow.setFixedSize(40, 40)
-left_arrow.setStyleSheet(right_arrow.styleSheet())
-left_arrow.clicked.connect(show_main_plots)
-
-right_arrow2 = QtWidgets.QPushButton("⊳", main_window)
-right_arrow2.setToolTip("Show Comparison Plot")
-right_arrow2.setFixedSize(40, 40)
-right_arrow2.setStyleSheet(right_arrow.styleSheet())
-right_arrow2.clicked.connect(show_rogowski_comparison_plot)
-
-left_arrow2 = QtWidgets.QPushButton("⊲", main_window)
-left_arrow2.setToolTip("Show MpR & MpZ Plots")
-left_arrow2.setFixedSize(40, 40)
-left_arrow2.setStyleSheet(right_arrow.styleSheet())
-left_arrow2.clicked.connect(show_mprz_plots)
-
-right_arrow3 = QtWidgets.QPushButton("⊳", main_window)
-right_arrow3.setToolTip("Show PID Voltage Requests")
-right_arrow3.setFixedSize(40, 40)
-right_arrow3.setStyleSheet(right_arrow.styleSheet())
-right_arrow3.clicked.connect(show_pid_request_plots)
-
-left_arrow3 = QtWidgets.QPushButton("⊲", main_window)
-left_arrow3.setToolTip("Show Comparison Plot")
-left_arrow3.setFixedSize(40, 40)
-left_arrow3.setStyleSheet(right_arrow.styleSheet())
-left_arrow3.clicked.connect(show_rogowski_comparison_plot)
-
-right_arrow4 = QtWidgets.QPushButton("⊳", main_window)
-right_arrow4.setToolTip("Show Fusion Comparison Plot")
-right_arrow4.setFixedSize(40, 40)
-right_arrow4.setStyleSheet(right_arrow.styleSheet())
-right_arrow4.clicked.connect(show_fusion_comparison_plot)
-
-left_arrow4 = QtWidgets.QPushButton("⊲", main_window)
-left_arrow4.setToolTip("Show Rogowski Comparison Plot")
-left_arrow4.setFixedSize(40, 40)
-left_arrow4.setStyleSheet(right_arrow.styleSheet())
-left_arrow4.clicked.connect(show_rogowski_comparison_plot)
-
-for btn in (right_arrow, left_arrow, right_arrow2, left_arrow2, right_arrow3, left_arrow3):
-    btn.setParent(main_window)
-    btn.setAttribute(QtCore.Qt.WA_TransparentForMouseEvents, False)
-
-def reposition_arrows():
-    h = main_window.height()
-    # ====== Main Plots ===========
-    if not has_chopper:
-        right_arrow.move(main_window.width() - 60, h // 2 + 2)
-    else:
-        right_arrow.move(main_window.width() - 60, h // 2 - 48)
-    # ====== Position Plots =======
-    left_arrow.move(40, h // 2 + 2)
-    right_arrow2.move(main_window.width() - 60, h // 2 + 2)
-    # ====== Rogowski Comparison Plot ======
-    left_arrow2.move(40, h // 2 + 20)
-    right_arrow3.move(main_window.width() - 60, h // 2 + (-40 if fusion_available else 20))
-    right_arrow4.move(main_window.width() - 60, h // 2 + (40 if pid_available else 20))
-    # ====== PID Plots ============
-    left_arrow3.move(40, h // 2 + 2)
-    # ====== Fusion Comparison Plot ======
-    left_arrow4.move(40, h // 2 + 2)
+# ==================================================================================================
 
 suffix = "_float32" if use_float32 else ""
 
@@ -698,17 +786,130 @@ export2_btn.clicked.connect(lambda: export_plot_with_dialog(plot2, f"mpip_plot_s
 export3_btn.clicked.connect(lambda: export_plot_with_dialog(plot_widget.getItem(0, 0), f"mpr_plot_shot_{shot_number}{suffix}.png"))
 export4_btn.clicked.connect(lambda: export_plot_with_dialog(plot_widget.getItem(1, 0), f"mpz_plot_shot_{shot_number}{suffix}.png"))
 export5_btn.clicked.connect(lambda: export_plot_with_dialog(plot_widget.getItem(0, 0), f"rogowski_comparison_shot_{shot_number}{suffix}.png"))
-export6_btn.clicked.connect(lambda: export_plot_with_dialog(plot_widget.getItem(0, 0), f"pid_voltage_requests_shot_{shot_number}{suffix}.png"))
+export6_btn.clicked.connect(lambda: export_plot_with_dialog(plot_widget.getItem(0, 0), f"pid_vertical_current_request_shot_{shot_number}{suffix}.png"))
 export7_btn.clicked.connect(lambda: export_plot_with_dialog(plot_widget.getItem(0, 0), f"fusion_radial_shot_{shot_number}{suffix}.png"))
 export8_btn.clicked.connect(lambda: export_plot_with_dialog(plot_widget.getItem(1, 0), f"fusion_vertical_shot_{shot_number}{suffix}.png"))
 
 main_window.showMaximized()
 
-main_window.resizeEvent = lambda e: reposition_arrows()
-reposition_arrows()
-toggle_buttons(True)
+def can_show_mprz():
+    return (mpr_col is not None) or (mpz_col is not None)
 
-main_window.keyPressEvent = lambda event: app.quit() if event.key() == QtCore.Qt.Key_Escape else None
+def can_show_rogowski():
+    return has_rogowski
+
+def can_show_pid():
+    return pid_available  # vertical_current_request exists
+
+def can_show_fusion():
+    return fusion_min_available
+
+
+def go_next_page():
+    global current_page
+    # Order: 0 -> 1 -> 2 -> 3 -> 4
+
+    if current_page == 0:
+        if can_show_mprz():
+            show_mprz_plots()
+        elif can_show_rogowski():
+            show_rogowski_comparison_plot()
+        elif can_show_pid():
+            show_pid_request_plots()
+        elif can_show_fusion():
+            show_fusion_comparison_plot()
+        return
+
+    if current_page == 1:
+        if can_show_rogowski():
+            show_rogowski_comparison_plot()
+        elif can_show_pid():
+            show_pid_request_plots()
+        elif can_show_fusion():
+            show_fusion_comparison_plot()
+        return
+
+    if current_page == 2:
+        if can_show_pid():
+            show_pid_request_plots()
+        elif can_show_fusion():
+            show_fusion_comparison_plot()
+        return
+
+    if current_page == 3:
+        if can_show_fusion():
+            show_fusion_comparison_plot()
+        return
+
+
+def go_prev_page():
+    global current_page
+    # Reverse order: 4 -> 3 -> 2 -> 1 -> 0
+
+    if current_page == 4:
+        if can_show_pid():
+            show_pid_request_plots()
+        elif can_show_rogowski():
+            show_rogowski_comparison_plot()
+        elif can_show_mprz():
+            show_mprz_plots()
+        else:
+            show_main_plots()
+        return
+
+    if current_page == 3:
+        if can_show_rogowski():
+            show_rogowski_comparison_plot()
+        elif can_show_mprz():
+            show_mprz_plots()
+        else:
+            show_main_plots()
+        return
+
+    if current_page == 2:
+        if can_show_mprz():
+            show_mprz_plots()
+        else:
+            show_main_plots()
+        return
+
+    if current_page == 1:
+        show_main_plots()
+        return
+
+def handle_keypress(event):
+    global current_page
+
+    key = event.key()
+
+    # Keep ESC to quit
+    if key == QtCore.Qt.Key_Escape:
+        app.quit()
+        return
+
+    # Left/Right navigation
+    if key == QtCore.Qt.Key_Right:
+        go_next_page()
+        return
+
+    if key == QtCore.Qt.Key_Left:
+        go_prev_page()
+        return
+
+    # Optional: Up/Down as alternatives
+    if key == QtCore.Qt.Key_Down:
+        # behave like Right
+        fake = QtGui.QKeyEvent(QtCore.QEvent.KeyPress, QtCore.Qt.Key_Right, QtCore.Qt.NoModifier)
+        handle_keypress(fake)
+        return
+
+    if key == QtCore.Qt.Key_Up:
+        # behave like Left
+        fake = QtGui.QKeyEvent(QtCore.QEvent.KeyPress, QtCore.Qt.Key_Left, QtCore.Qt.NoModifier)
+        handle_keypress(fake)
+        return
+
+main_window.keyPressEvent = handle_keypress
 
 show_main_plots()
 
