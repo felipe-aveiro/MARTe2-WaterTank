@@ -76,6 +76,7 @@ weighted_corr_LP = weighted_cov_LP / (std_Rp_LP * std_Zp_LP)
 # === Results ===
 print(f"\nFiltered & weighted correlation (EpR vs EpZ): {weighted_corr_LP:.16f}\n")
 print(f"Filtered & weighted covariance (EpR vs EpZ): {weighted_cov_LP:.6e}\n")
+print(f"Off-diagonal elements (EpR vs EpZ): {(0.025**2)*weighted_corr_LP:.6e}\n")
 
 # === Visual correlation
 fig, ax = plt.subplots(figsize=(10, 6), constrained_layout=True)
