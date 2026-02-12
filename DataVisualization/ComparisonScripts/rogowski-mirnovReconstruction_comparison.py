@@ -179,8 +179,8 @@ if __name__ == '__main__':
     if match:
         pulse_no = match.group(1)
 
-    # Channel 228 corresponds to Rogowski coil
+    # Channel 088 corresponds to Rogowski coil
     client = SDASClient(HOST, PORT)
-    sdas_current, sdas_time = load_sdas_data(client, 'MARTE_NODE_IVO3.DataCollection.Channel_228', int(pulse_no))
+    sdas_current, sdas_time = load_sdas_data(client, 'MARTE_NODE_IVO3.DataCollection.Channel_088', int(pulse_no))
 
     plot_currents(csv_time, csv_current, sdas_time, sdas_current)

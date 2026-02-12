@@ -81,7 +81,7 @@ def main():
 
     # === Load SDAS data ===
     client = SDASClient(HOST, PORT)
-    sdas_current, sdas_time = load_sdas_data(client, 'MARTE_NODE_IVO3.DataCollection.Channel_228', int(pulse_no))
+    sdas_current, sdas_time = load_sdas_data(client, 'MARTE_NODE_IVO3.DataCollection.Channel_088', int(pulse_no))
 
     # === Align signals ===
     delay_index = align_signals(csv_current, sdas_current)
