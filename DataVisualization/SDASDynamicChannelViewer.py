@@ -8,7 +8,7 @@ from sdas.core.client.SDASClient import SDASClient
 HOST = 'baco.ipfn.tecnico.ulisboa.pt'
 PORT = 8888
 DEFAULT_SHOT = 46241
-START_CHANNEL = 49  # initial channel -> Rogowski channel
+START_CHANNEL = 88  # initial channel -> Rogowski channel
 MAX_CHANNEL = 254
 MIN_CHANNEL = 0
 
