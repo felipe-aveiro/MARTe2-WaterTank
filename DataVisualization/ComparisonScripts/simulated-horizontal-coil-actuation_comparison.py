@@ -1,0 +1,192 @@
+import argparse
+from sdas.core.client.SDASClient import SDASClient
+from sdas.core.SDAStime import TimeStamp
+import numpy as np
+import pandas as pd
+import pyqtgraph as pg
+from pyqtgraph.Qt import QtWidgets, QtCore, QtGui
+from pyqtgraph.exporters import ImageExporter
+import sys
+import os
+import re
+
+
+app = QtWidgets.QApplication(sys.argv)
+
+HOST = 'baco.ipfn.tecnico.ulisboa.pt'
+PORT = 8888
+
+def align_signals(csv_signal, sdas_signal):
+    correlation = np.correlate(csv_signal - np.mean(csv_signal), sdas_signal - np.mean(sdas_signal), mode='full')
+    delay_index = np.argmax(correlation) - (len(sdas_signal) - 1)
+    return delay_index
+
+def load_csv_actuation_signal(path):
+    if not os.path.exists(path):
+        raise FileNotFoundError(f"CSV file not found at: {path}")
+    
+    df = pd.read_csv(path, delimiter=';')
+    df.columns = df.columns.str.strip()
+    print("\nSuccessfully loaded", path, "\n")
+
+    time_col = next((col for col in df.columns if col.startswith("#time")), None)
+    current_col = next(
+        (col for col in df.columns
+         if "vertical_current_request (float64)[1]" in col
+         or "vertical_current_request (float32)[1]" in col),
+        None
+    )
+
+    if not time_col or not current_col:
+        raise ValueError("Time or horizontal coil actuation signals column not found in CSV.")
+
+    chopper_col = next((col for col in df.columns if "chopper_trigger" in col), None)
+
+    if chopper_col and df[chopper_col].eq(3).any():
+        start_index = df[df[chopper_col] == 3].index.min()
+        df_filtered = df.loc[start_index:].reset_index(drop=True)
+        print(f"\nChopper trigger found at index {start_index}. Data aligned.\n")
+    else:
+        df_filtered = df.copy()
+        print("\nNo chopper trigger == 3 found. Using full signal.\n")
+
+    time = (df_filtered[time_col] - df_filtered[time_col].iloc[0]) * 1e3  # convert to milliseconds
+    current = df_filtered[current_col].to_numpy(dtype=np.float64)
+
+    return time.to_numpy(), current
+
+
+def load_sdas_data(client, channel_id, shot_number):
+    data_struct = client.getData(channel_id, '0x0000', shot_number)
+    data_array = np.array(data_struct[0].getData())
+    length = len(data_array)
+    t_start = data_struct[0].getTStart()
+    t_end = data_struct[0].getTEnd()
+    delta_t = (t_end.getTimeInMicros() - t_start.getTimeInMicros()) / length
+    time_vector = np.linspace(0, delta_t * (length - 1), length)
+    return data_array, time_vector * 1e-3  # convert to milliseconds
+
+def plot_currents(csv_time, csv_current, sdas_time, sdas_current):
+    delay_index = align_signals(csv_current, sdas_current)
+    dt = np.mean(np.diff(csv_time))
+    shift_ms = delay_index * dt
+    csv_time_aligned = csv_time - shift_ms
+
+    # Main window
+    win = QtWidgets.QMainWindow()
+    win.setWindowTitle("Magnetic Reconstruction vs Rogowski Coil Measurement")
+
+    central_widget = QtWidgets.QWidget()
+    win.setCentralWidget(central_widget)
+    layout = QtWidgets.QVBoxLayout(central_widget)
+
+    # Plot widget
+    plot_widget = pg.GraphicsLayoutWidget()
+    # === TEMPORARY SIZE FOR EXPORT PREVIEW ========================================================================
+    plot_widget.setFixedSize(700,350) # (800, 400) for position plots
+    # === REMOVE AFTER EXTRACTING RELEVANT PLOTS ===================================================================
+    layout.addWidget(plot_widget)
+
+    plot = plot_widget.addPlot(title="Time Evolution of Plasma Current")
+    plot.setLabel('bottom', 'Time [ms]')
+    plot.setLabel('left', 'Current [A]')
+    #legend = plot.addLegend()
+    #legend.setLabelTextSize("11pt")
+    plot.setXRange(160, 400, padding=0)
+    plot.setYRange(-250, 50, padding=0)
+    plot.setLimits(xMin=csv_time_aligned.min(), xMax=csv_time_aligned.max(), yMin=-250, yMax=50)
+    plot.showGrid(x=True, y=True)
+        
+    # === Adjust fonts  ===
+    title_font = QtGui.QFont("Arial", 14, QtGui.QFont.Bold)
+    axis_font = QtGui.QFont("Arial", 11, QtGui.QFont.Bold)
+    
+    plot.titleLabel.item.setFont(title_font)
+    plot.getAxis("bottom").label.setFont(axis_font)
+    plot.getAxis("left").label.setFont(axis_font)
+
+    plasma_mp = plot.plot(csv_time_aligned, csv_current, pen=pg.mkPen('b', width=2), name="Simulated controller signal")
+    plasma_rog = plot.plot(sdas_time, sdas_current, pen=pg.mkPen('r', width=2, style=QtCore.Qt.DashLine), name="Actual controller signal")
+
+    x_offset = 85
+    y_offset = 190
+    spacing = 25
+    legend_font = QtGui.QFont("Arial", 10)
+        
+    legend_items = [
+        (plasma_mp, "Simulated controller signal"),
+        (plasma_rog, "Actual controller signal")
+    ]
+    
+    custom_legend_items_pos = []
+    
+    for i, (curve, label) in enumerate(legend_items):
+        legend_y = y_offset + i * spacing
+
+        # Custom sample
+        sample = pg.graphicsItems.LegendItem.ItemSample(curve)
+        sample.setParentItem(plot.graphicsItem())
+        sample.setPos(x_offset, legend_y - 3)
+        custom_legend_items_pos.append(sample)
+        
+
+        # Label text
+        text = pg.TextItem(label, anchor=(0, 0), color='gray')
+        text.setFont(legend_font)
+        text.setParentItem(plot.graphicsItem())
+        text.setPos(x_offset + 25, legend_y)
+        custom_legend_items_pos.append(text)
+    
+    # Export button
+    export_btn = QtWidgets.QPushButton("Export Plot")
+    layout.addWidget(export_btn)
+
+    def export_plot():
+        default_dir = "/home/felipe/git-repos/MARTe2-WaterTank/DataVisualization/Outputs/VerticalControlPlots"
+        os.makedirs(default_dir, exist_ok=True)
+        default_path = os.path.join(default_dir, f"plasma_current_plot_shot_{pulse_no}.png")
+        path, _ = QtWidgets.QFileDialog.getSaveFileName(
+            None,
+            "Save Plot as PNG",
+            default_path,
+            "PNG Files (*.png)"
+        )
+        if path:
+            exporter = ImageExporter(plot.scene())
+            exporter.export(path)
+            print(f"\nPlot saved to {path}\n")
+
+    export_btn.clicked.connect(export_plot)
+
+    win.showMaximized()
+    win.keyPressEvent = lambda event: app.quit() if event.key() == QtCore.Qt.Key_Escape else None
+    sys.exit(app.exec_())
+
+def get_arguments():
+    parser = argparse.ArgumentParser(description='Compare simulated horizontal coil actuation signals from data in CSV with the actual data in SDAS')
+    parser.add_argument('-s', help='Shot number', default='46241', type=str)
+    return parser.parse_args()
+
+if __name__ == '__main__':
+    args = get_arguments()
+    csv_path, _ = QtWidgets.QFileDialog.getOpenFileName(
+        None,
+        "Open CSV File",
+        "/home/felipe/git-repos/MARTe2-WaterTank/DataVisualization/Outputs/",
+        "CSV Files (*.csv);;All Files (*)"
+    )
+
+    csv_time, csv_current = load_csv_actuation_signal(csv_path)
+
+    # Determine the shot number
+    pulse_no = args.s
+    csv_filename = os.path.basename(csv_path)
+    match = re.search(r'(\d{5})', csv_filename)
+    if match:
+        pulse_no = match.group(1)
+
+    # Channel 126 corresponds to horizontal coil
+    client = SDASClient(HOST, PORT)
+    sdas_current, sdas_time = load_sdas_data(client, 'MARTE_NODE_IVO3.DataCollection.Channel_126', int(pulse_no))
+
+    plot_currents(csv_time, csv_current, sdas_time, sdas_current)
