@@ -10,7 +10,7 @@ PORT = 8888
 DEFAULT_OUTPUT_DIR = '/home/felipe/git-repos/MARTe2-WaterTank/DataVisualization/ISTTOK_shots_CSV_files/csv'
 
 def get_arguments():
-    parser = argparse.ArgumentParser(description='Export Mirnov coil data from SDAS to CSV.')
+    parser = argparse.ArgumentParser(description='Export Mirnov coil, Langmuir probes & Rogowski coil data from SDAS to CSV.')
     parser.add_argument('-s', help='Shot number', default='46241')
     parser.add_argument('-o', help='Output CSV file path (optional)')
     parser.add_argument('--dtype', help='Floating point type: float32 or float64', default='float64', choices=['float32', 'float64'])
