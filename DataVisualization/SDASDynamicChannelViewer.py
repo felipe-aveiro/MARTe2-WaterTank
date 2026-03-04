@@ -291,9 +291,9 @@ class SDASPlotter(QtWidgets.QMainWindow):
             item = QtWidgets.QListWidgetItem(text)
             item.setData(QtCore.Qt.UserRole, uid)
 
-            # Grey out items that are not Channel_XXX (still shown, but not loadable)
+            """# Grey out items that are not Channel_XXX (still shown, but not loadable)
             if ch_num is None:
-                item.setFlags(item.flags() & ~QtCore.Qt.ItemIsEnabled)
+                item.setFlags(item.flags() & ~QtCore.Qt.ItemIsEnabled)"""
             list_widget.addItem(item)
 
         # Buttons
@@ -340,27 +340,94 @@ class SDASPlotter(QtWidgets.QMainWindow):
             return
 
         ch_num = self.extract_channel_number_from_uniqueid(selected_uid)
-        if ch_num is None:
-            self.status_label.setText(f"Selected item is not a Channel_XXX: {selected_uid}")
-            return
+        # Try to interpret as Channel_XXX first
+        ch_num = self.extract_channel_number_from_uniqueid(selected_uid)
+        if ch_num is not None:
+            if not (MIN_CHANNEL <= ch_num <= MAX_CHANNEL):
+                self.status_label.setText(f"Selected Channel_{ch_num:03d} is outside [0..254].")
+                return
+            self.load_and_plot_channel(ch_num)
+        else:
+            # Not a DataCollection.Channel_XXX -> load directly by uniqueID
+            # Find the display name from matches for nicer title
+            selected_name = None
+            for (nm, uid) in matches:
+                if uid == selected_uid:
+                    selected_name = nm
+                    break
+            self.load_and_plot_uniqueid(selected_uid, display_name=selected_name)
 
-        if not (MIN_CHANNEL <= ch_num <= MAX_CHANNEL):
-            self.status_label.setText(f"Selected Channel_{ch_num:03d} is outside [0..254].")
-            return
-
-        self.load_and_plot_channel(ch_num)
         self.name_input.clear()
 
-    """
-    def make_signal_header(self, channel_id: str, param_name: str) -> str:
-        ""
-        Returns a CSV-friendly header like: 'MARTE...Channel_049 | ADC_horizontal_current'
-        ""
-        name = (param_name or "Unknown").strip()
-        # Keep it friendly for CSV/Excel: remove tabs/newlines
-        name = name.replace("\t", " ").replace("\n", " ").replace("\r", " ")
-        return f"{channel_id} | {name}"
-    """
+
+    def load_and_plot_uniqueid(self, unique_id: str, display_name: str = None):
+        """
+        Loads and plots any SDAS parameter by uniqueID (not only Channel_XXX).
+        Handles scalar/single-sample signals by expanding them to a short time base.
+        """
+        try:
+            resolved_name = display_name or self.resolve_parameter_name(unique_id)
+
+            self.status_label.setText(f"Loading {unique_id} | {resolved_name} (shot {self.shot_number})...")
+            QtWidgets.QApplication.processEvents()
+
+            data_struct = self.client.getData(unique_id, '0x0000', self.shot_number)
+            if (not data_struct) or (data_struct[0] is None) or (data_struct[0].getData() is None):
+                self.plot_widget.clear()
+                self.plot_widget.setTitle(f"{unique_id} | {resolved_name} | Shot {self.shot_number}")
+                self.status_label.setText(f"No data in {unique_id} | {resolved_name} (shot {self.shot_number}).")
+                self.last_time_ms = None
+                self.last_signal = None
+                self.last_channel_id = unique_id
+                self.last_param_name = resolved_name
+                return
+
+            raw = data_struct[0].getData()
+            if len(raw) == 0:
+                self.plot_widget.clear()
+                self.plot_widget.setTitle(f"{unique_id} | {resolved_name} | Shot {self.shot_number}")
+                self.status_label.setText(f"No data in {unique_id} | {resolved_name} (shot {self.shot_number}).")
+                self.last_time_ms = None
+                self.last_signal = None
+                self.last_channel_id = unique_id
+                self.last_param_name = resolved_name
+                return
+
+            signal = np.array(raw).astype(float)
+
+            # Build a time vector:
+            # - Normal case: use tstart/tend to create evenly spaced vector
+            # - Scalar/single sample: create a dummy short time base (0..1 ms)
+            if len(signal) <= 1:
+                time_vector = np.array([0.0, 1.0])  # ms
+                signal = np.array([signal[0], signal[0]], dtype=float)
+            else:
+                tstart = data_struct[0].getTStart()
+                tend = data_struct[0].getTEnd()
+                total_time_us = tend.getTimeInMicros() - tstart.getTimeInMicros()
+                time_vector = np.linspace(0, total_time_us, len(signal)) * 1e-3  # ms
+
+            # Store last plotted data for saving
+            self.last_time_ms = time_vector
+            self.last_signal = signal
+            self.last_channel_id = unique_id
+            self.last_param_name = resolved_name
+
+            self.plot_widget.clear()
+            zero_line = pg.InfiniteLine(
+                pos=0, angle=0,
+                pen=pg.mkPen('w', width=1, style=QtCore.Qt.DashLine)
+            )
+            self.plot_widget.addItem(zero_line)
+
+            self.plot_widget.plot(time_vector, signal, pen=pg.mkPen('green', width=2))
+            self.plot_widget.setTitle(f"{unique_id} | {resolved_name} | shot {self.shot_number}")
+            self.status_label.setText(f"Loaded {unique_id} | {resolved_name} | shot {self.shot_number} | {len(signal)} points.")
+
+        except Exception as e:
+            resolved_name = display_name or self.resolve_parameter_name(unique_id)
+            self.status_label.setText(f"Error loading {unique_id} | {resolved_name}: {e}")
+
     
     def make_marte_headers(self, channel_id: str, param_name: str):
         """
