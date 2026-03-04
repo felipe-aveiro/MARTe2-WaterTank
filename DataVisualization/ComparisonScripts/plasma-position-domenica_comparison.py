@@ -13,6 +13,33 @@ app = QtWidgets.QApplication(sys.argv)
 HOST = 'baco.ipfn.tecnico.ulisboa.pt'
 PORT = 8888
 
+"""
+Corona (2021)
+=== ## List of shots to compare and their corresponding setpoints
+
+#48563 - Zref = -4mm
+#48556 - Zref = -5mm
+#48551 - Zref = -5mm
+#48515 - Zref = -5mm
+#48544 - Zref = -4mm
+#48546 - Zref = -7mm
+#48340 - Zref = -5.5mm
+#48343 - Zref = -5mm
+#48346 - Zref = -5.3mm
+#48349 - Zref = -5.6mm
+#48352 - Zref = -4.7mm
+#48351 - Zref = -5.6mm
+
+"""
+
+"""
+=== ## Useful information
+
+Channel 42 (ADC_horizontal_current) corresponds to the Horizontal PF Coil current [A]
+Channel 126 (SendToHorizontalValue) corresponds to the Horizontal PF Coil current request [A]
+
+"""
+
 # === Load CSV file ===
 def load_csv(path):
     df = pd.read_csv(path, delimiter=';')
@@ -83,10 +110,10 @@ if not options_map:
     QtWidgets.QMessageBox.critical(None, "Error", "No valid reconstruction columns found in CSV.")
     sys.exit()
 
-# === Load Domenica's SDAS channels (083 and 084) ===
+# === Load Domenica's SDAS channels (101 and 102) ===
 client = SDASClient(HOST, PORT)
-radial_dom, sdas_time = load_sdas_channel(client, "MARTE_NODE_IVO3.DataCollection.Channel_083", shot_number)
-vertical_dom, _ = load_sdas_channel(client, "MARTE_NODE_IVO3.DataCollection.Channel_084", shot_number)
+radial_dom, sdas_time = load_sdas_channel(client, "MARTE_NODE_IVO3.DataCollection.Channel_101", shot_number)
+vertical_dom, _ = load_sdas_channel(client, "MARTE_NODE_IVO3.DataCollection.Channel_102", shot_number)
 
 # === Dialog to choose reconstruction ===
 dialog = QtWidgets.QDialog()
