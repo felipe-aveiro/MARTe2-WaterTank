@@ -67,7 +67,7 @@ central_widget.setLayout(main_layout)
 main_window.setCentralWidget(central_widget)
 
 plot_widget = pg.GraphicsLayoutWidget()
-#plot_widget.setFixedSize(800,350)
+plot_widget.setFixedSize(800,600)
 main_layout.addWidget(plot_widget)
 
 bold_font = QtGui.QFont("Arial", 11, QtGui.QFont.Bold)
@@ -80,7 +80,7 @@ plot_r.setLabel('left', 'R [m]')
 plot_r.getAxis("bottom").label.setFont(bold_font)
 plot_r.getAxis("left").label.setFont(bold_font)
 plot_r.setXRange(time_min, time_max, padding=0)
-#plot_r.setXRange(180, 350, padding=0)
+plot_r.setXRange(265, 300, padding=0)
 plot_r.setLimits(xMin=time_min, xMax=time_max)
 plot_r.setYRange(0.46 - 0.1, 0.46 + 0.1)
 plot_r.addItem(pg.InfiniteLine(pos=0.46, angle=0, pen=pg.mkPen('w', width=1, style=QtCore.Qt.DashLine)))
@@ -129,7 +129,7 @@ plot_z.setLabel('left', 'Z [m]')
 plot_z.getAxis("bottom").label.setFont(bold_font)
 plot_z.getAxis("left").label.setFont(bold_font)
 plot_z.setXRange(time_min, time_max, padding=0)
-#plot_z.setXRange(180, 350, padding=0)
+plot_z.setXRange(265, 300, padding=0)
 plot_z.setLimits(xMin=time_min, xMax=time_max)
 plot_z.setYRange(-0.1, 0.1)
 plot_z.addItem(pg.InfiniteLine(pos=0, angle=0, pen=pg.mkPen('w', width=1, style=QtCore.Qt.DashLine)))
@@ -146,8 +146,10 @@ legend_items_z = [
         (curve_f_z, "Fused State")
     ]
 
-x_offset = 1630
-y_offset = 90
+#x_offset = 1620
+x_offset = 300
+#y_offset = 90
+y_offset = -250
 spacing = 15
 legend_font = QtGui.QFont("Arial", 10)
 
@@ -186,9 +188,6 @@ def sync_y_range(source_plot, target_plot, offset):
 
 offset_r_to_z = plot_z.vb.viewRange()[1][0] - plot_r.vb.viewRange()[1][0]
 offset_z_to_r = plot_r.vb.viewRange()[1][0] - plot_z.vb.viewRange()[1][0]
-
-plot_r.vb.sigYRangeChanged.connect(lambda: sync_y_range(plot_r, plot_z, offset_r_to_z))
-plot_z.vb.sigYRangeChanged.connect(lambda: sync_y_range(plot_z, plot_r, offset_z_to_r))
 
 # === Export buttons ===
 button_layout = QtWidgets.QHBoxLayout()

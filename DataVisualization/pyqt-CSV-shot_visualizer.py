@@ -16,6 +16,7 @@ selected_points = {}
 active_plot = None
 custom_legend_items = []
 custom_legend_items_pos = []
+custom_legend_items_extra = []
 
 current_page = 0
 # 0: main_plots
@@ -82,10 +83,12 @@ def setup_clickable_plot(plot, y_index, y_unit):
 
 # === Ask user to open a CSV file ===
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..")) 
+csv_initial_dir = os.path.join(BASE_DIR, "DataVisualization", "Outputs")
+
 csv_path, _ = QtWidgets.QFileDialog.getOpenFileName(
     None,
     "Open CSV File",
-    os.path.join(BASE_DIR, "DataVisualization\\Outputs"),
+    csv_initial_dir,
     "CSV Files (*.csv);;All Files (*)"
 )
 # ==================================================================================================
@@ -304,6 +307,32 @@ main_layout.addLayout(button_layout)
 plot_widget = pg.GraphicsLayoutWidget()
 
 main_layout.addWidget(plot_widget, stretch=1)
+
+def clear_custom_legend_items(items):
+    while items:
+        item = items.pop()
+        try:
+            item.setParentItem(None)
+        except RuntimeError:
+            pass
+
+
+def add_custom_legend(plot, legend_items, x_offset=65, y_offset=35, spacing=18):
+    legend_font = QtGui.QFont("Arial", 10)
+
+    for i, (curve, label) in enumerate(legend_items):
+        legend_y = y_offset + i * spacing
+
+        sample = pg.graphicsItems.LegendItem.ItemSample(curve)
+        sample.setParentItem(plot.graphicsItem())
+        sample.setPos(x_offset, legend_y - 3)
+        custom_legend_items_extra.append(sample)
+
+        text = pg.TextItem(label, anchor=(0, 0), color='gray')
+        text.setFont(legend_font)
+        text.setParentItem(plot.graphicsItem())
+        text.setPos(x_offset + 25, legend_y)
+        custom_legend_items_extra.append(text)
 
 def show_main_plots():
     save_current_xrange()
@@ -571,6 +600,7 @@ def show_rogowski_comparison_plot():
     current_page = 2
     
     save_current_xrange()
+    clear_custom_legend_items(custom_legend_items_extra)
     plot_widget.clear() 
     export1_btn.hide()
     export2_btn.hide()
@@ -581,10 +611,10 @@ def show_rogowski_comparison_plot():
     export8_btn.hide()
     export5_btn.show()
 
-    plot_rogowski = plot_widget.addPlot(title="Rogowski Measurements vs Magnetic Reconstruction")
+    plot_rogowski = plot_widget.addPlot(title="Time Evolution of Plasma Current Measurements & Reconstruction")
+    plot_rogowski.titleLabel.item.setFont(QtGui.QFont("Arial", 14, QtGui.QFont.Bold))
     plot_rogowski.setLabel('bottom', 'Time [ms]')
     plot_rogowski.setLabel('left', 'A')
-    plot_rogowski.addLegend()
     plot_rogowski.setXRange(time_min, time_max, padding=0)
     plot_rogowski.setLimits(xMin=time_min, xMax=time_max)
     if pd.notna(rogowski_col): plot_rogowski.plot(time, df_filtered[rogowski_col].values, pen='m', name="Rogowski Measurement")
@@ -599,6 +629,34 @@ def show_rogowski_comparison_plot():
     setup_clickable_plot(plot_rogowski, "Iₚ", "A")
 
     plot_rogowski.setXRange(*current_xrange, padding=0)
+
+    legend_items = []
+
+    if pd.notna(rogowski_col):
+        rogowski_curve = plot_rogowski.plot(
+            time,
+            df_filtered[rogowski_col].values,
+            pen='m'
+        )
+        legend_items.append((rogowski_curve, "Rogowski Measurement"))
+    else:
+        QtWidgets.QMessageBox.warning(None, "Warning", "No Rogowski data found.")
+
+    if mpip_col is not None:
+        mpip_curve = plot_rogowski.plot(
+            time,
+            df_filtered[mpip_col].values,
+            pen='r'
+        )
+        legend_items.append((mpip_curve, "Magnetic Reconstruction"))
+    else:
+        QtWidgets.QMessageBox.warning(
+            None,
+            "WARNING!",
+            "No Magnetic Reconstruction (outputMpIp) found. Only showing Rogowski coil measurements."
+        )
+
+    add_custom_legend(plot_rogowski, legend_items, x_offset=65, y_offset=35, spacing=18)
 
 def show_pid_request_plots():
     global current_page
@@ -629,7 +687,7 @@ def show_pid_request_plots():
 
     bold_font = QtGui.QFont("Arial", 11, QtGui.QFont.Bold)
 
-    plot_v = plot_widget.addPlot(title="Vertical Current Request vs Time")
+    plot_v = plot_widget.addPlot(title="Time Evolution of Vertical Current Request")
     plot_v.setLabel('bottom', 'Time [ms]')
     plot_v.setLabel('left', 'Vertical Current [A]')
     plot_v.getAxis("bottom").label.setFont(bold_font)
@@ -652,8 +710,9 @@ def show_fusion_comparison_plot():
     current_page = 4
     
     save_current_xrange()
+    clear_custom_legend_items(custom_legend_items_extra)
     plot_widget.clear()
-
+    
     export1_btn.hide()
     export2_btn.hide()
     export3_btn.hide()
@@ -668,64 +727,75 @@ def show_fusion_comparison_plot():
         QtWidgets.QMessageBox.warning(None, "Warning", "Fused signals (outputFusedR/Z) not found in this CSV.")
         return
 
-    plot_r = plot_widget.addPlot(title="Radial Position: Magnetic vs Electric vs Fused")
+    plot_r = plot_widget.addPlot(title="Time Evolution of Estimated Radial Position")
+    plot_r.titleLabel.item.setFont(QtGui.QFont("Arial", 14, QtGui.QFont.Bold))
     plot_r.setLabel('bottom', 'Time [ms]')
     plot_r.setLabel('left', 'R [m]')
     plot_r.setXRange(time_min, time_max, padding=0)
     plot_r.setLimits(xMin=time_min, xMax=time_max)
     plot_r.setYRange(0.46 - 0.1, 0.46 + 0.1)
-    plot_r.addLegend()
     plot_r.addItem(pg.InfiniteLine(pos=0.46, angle=0, pen=pg.mkPen('w', width=1, style=QtCore.Qt.DashLine)))
     plot_r.addItem(pg.InfiniteLine(pos=0.46 + 0.085, angle=0, pen=pg.mkPen('r', width=2, style=QtCore.Qt.DotLine)))
     plot_r.addItem(pg.InfiniteLine(pos=0.46 - 0.085, angle=0, pen=pg.mkPen('r', width=2, style=QtCore.Qt.DotLine)))
+    legend_items_r = []
 
     if mpr_col is not None:
-        plot_r.plot(time, df_filtered[mpr_col].values, pen='m', name="Mirnov")
+        mirnov_r_curve = plot_r.plot(time, df_filtered[mpr_col].values, pen='m')
+        legend_items_r.append((mirnov_r_curve, "Mirnov"))
     else:
         print("[WARNING!] outputMpR not found -> skipping Mirnov (R)\n")
 
     if ep_r_col is not None:
-        plot_r.plot(time, df_filtered[ep_r_col].values, pen='g', name="Langmuir")
+        langmuir_r_curve = plot_r.plot(time, df_filtered[ep_r_col].values, pen='g')
+        legend_items_r.append((langmuir_r_curve, "Langmuir"))
     else:
         print("[WARNING!] outputEpR not found -> skipping Langmuir (R)\n")
 
     # fused_r_col guaranteed by fusion_min_available
-    plot_r.plot(time, df_filtered[fused_r_col].values, pen='b', name="Fused")
+    fused_r_curve = plot_r.plot(time, df_filtered[fused_r_col].values, pen='b')
+    legend_items_r.append((fused_r_curve, "Fused"))
+    add_custom_legend(plot_r, legend_items_r, x_offset=65, y_offset=35, spacing=18)
 
     plot_widget.nextRow()
 
-    plot_z = plot_widget.addPlot(title="Vertical Position: Magnetic vs Electric vs Fused")
+    plot_z = plot_widget.addPlot(title="Time Evolution of Estimated Vertical Position")
+    plot_z.titleLabel.item.setFont(QtGui.QFont("Arial", 14, QtGui.QFont.Bold))
     plot_z.setLabel('bottom', 'Time [ms]')
     plot_z.setLabel('left', 'Z [m]')
     plot_z.setXRange(time_min, time_max, padding=0)
     plot_z.setLimits(xMin=time_min, xMax=time_max)
     plot_z.setYRange(-0.1, 0.1)
-    plot_z.addLegend()
     plot_z.addItem(pg.InfiniteLine(pos=0, angle=0, pen=pg.mkPen('w', width=1, style=QtCore.Qt.DashLine)))
     plot_z.addItem(pg.InfiniteLine(pos=0.085, angle=0, pen=pg.mkPen('r', width=2, style=QtCore.Qt.DotLine)))
     plot_z.addItem(pg.InfiniteLine(pos=-0.085, angle=0, pen=pg.mkPen('r', width=2, style=QtCore.Qt.DotLine)))
+    legend_items_z = []
 
     if mpz_col is not None:
-        plot_z.plot(time, df_filtered[mpz_col].values, pen='m', name="Mirnov")
+        mirnov_z_curve = plot_z.plot(time, df_filtered[mpz_col].values, pen='m')
+        legend_items_z.append((mirnov_z_curve, "Mirnov"))
     else:
         print("[WARNING!] outputMpZ not found -> skipping Mirnov (Z)\n")
 
     if ep_z_col is not None:
-        plot_z.plot(time, df_filtered[ep_z_col].values, pen='g', name="Langmuir")
+        langmuir_z_curve = plot_z.plot(time, df_filtered[ep_z_col].values, pen='g')
+        legend_items_z.append((langmuir_z_curve, "Langmuir"))
     else:
         print("[WARNING!] outputEpZ not found -> skipping Langmuir (Z)\n")
 
     # fused_z_col guaranteed by fusion_min_available
-    plot_z.plot(time, df_filtered[fused_z_col].values, pen='b', name="Fused")
+    fused_z_curve = plot_z.plot(time, df_filtered[fused_z_col].values, pen='b')
+    legend_items_z.append((fused_z_curve, "Fused"))
 
     # ===== Reference also appears in fused graph =====
     if z_ref_col is not None:
-        plot_z.plot(
-            time,
-            df_filtered[z_ref_col].values,
-            pen=pg.mkPen('w', width=2, style=QtCore.Qt.DashLine),
-            name="Reference"
-        )
+        reference_curve = plot_z.plot(
+        time,
+        df_filtered[z_ref_col].values,
+        pen=pg.mkPen('w', width=2, style=QtCore.Qt.DashLine)
+    )
+        legend_items_z.append((reference_curve, "Reference"))
+
+    add_custom_legend(plot_z, legend_items_z, x_offset=65, y_offset=35, spacing=18)
 
     plot_r.setXLink(plot_z)
 
@@ -750,7 +820,7 @@ def sync_y_range(source_plot, target_plot, offset):
     target_plot.getAxis('left').setRange(*new_target_range)
     target_plot.getAxis('left').update()
 
-"""def export_plot_with_dialog(plot, suggested_name):
+def export_plot_with_dialog(plot, suggested_name):
     options = QtWidgets.QFileDialog.Options()
     file_path, _ = QtWidgets.QFileDialog.getSaveFileName(
         main_window,
@@ -761,23 +831,7 @@ def sync_y_range(source_plot, target_plot, offset):
     )
     if file_path:
         exporter = pg.exporters.ImageExporter(plot)
-        exporter.export(file_path)"""
-
-# ==================================================================================================
-# [!] WARNING: DO NOT PUSH CHANGES
-def export_plot_with_dialog(plot, suggested_name):
-    options = QtWidgets.QFileDialog.Options()
-    file_path, _ = QtWidgets.QFileDialog.getSaveFileName(
-        main_window,
-        "Save Plot As...",
-        os.path.join(os.path.expanduser("~"), "Documents\\Tese\\Imagens", suggested_name),
-        "PNG Files (*.png);;All Files (*)",
-        options=options
-    )
-    if file_path:
-        exporter = pg.exporters.ImageExporter(plot)
         exporter.export(file_path)
-# ==================================================================================================
 
 suffix = "_float32" if use_float32 else ""
 
