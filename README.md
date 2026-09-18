@@ -1,7 +1,7 @@
 # **MARTe2-WaterTank**
 
 > [!NOTE]  
-> This repository is part of the experimental setup and development of a Master's thesis in Mechanical Engineering - 'Real-Time Control of Vertical Plasma Position in ISTTOK: A Simulink-based Modeling Approach with MARTe2 Integration'. It explores real-time control and simulation using MARTe2, with applications ranging from a non-linear water tank system to plasma control studies at ISTTOK.
+> This repository is part of the experimental setup and development of a Master's thesis in Mechanical Engineering - 'Real-Time Plasma Position Estimation in ISTTOK: A MARTe2-based Implementation with Simulink Modeling'. It explores real-time control and simulation using MARTe2, with applications ranging from a non-linear water tank system to plasma control studies at ISTTOK.
 
 ## **Overview**
 
