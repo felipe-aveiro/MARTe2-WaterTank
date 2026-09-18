@@ -30,6 +30,9 @@ MARTe2-WaterTank is a project built on top of the [***MARTe2***](https://vcis.f4
 
 The repository includes:
 
+- [**_Master's Thesis_**](Master_Thesis_Felipe_Tassari_Aveiro.pdf)
+  - Title: **Real-Time Plasma Position Estimation in ISTTOK: A MARTe2-based Implementation with Simulink Modeling**
+  - Provides the theoretical background, methodology, implementation details, and experimental validation associated with this repository
 - [**_Configurations_**](Configurations)
   - [**RTApp-1-1.cfg**](Configurations/RTApp-1-1.cfg) | [**RTApp-1-1-statemachine.cfg**](Configurations/RTApp-1-1-statemachine.cfg) | [**RTApp-1-2-statemachine.cfg**](Configurations/RTApp-1-2-statemachine.cfg)
     - Tutorial configurations imported from MARTe2 documentation, used as references and for initial validation of the framework
